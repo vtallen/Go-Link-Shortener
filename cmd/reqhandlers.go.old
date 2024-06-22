@@ -1,0 +1,21 @@
+package main
+
+import (
+	"database/sql"
+	"net/http"
+
+	"github.com/labstack/echo"
+)
+
+func handleRedirect(c *echo.Context, db *sql.DB, config *Config) {
+	shortcode := c.Param("shortcode")
+	id := codegen.UniverseToBaseTen(shortcode, config.Universe)
+
+	// link, err := getLink(db, id)
+	if err != nil {
+		// c.JSON(http.StatusNotFound, gin.H{"error": "shortcode not found " + err.Error()})
+		c.Render(http.StatusNotFound, "404", nil)
+	} else {
+		c.Redirect(http.StatusMovedPermanently, link.url)
+	}
+}

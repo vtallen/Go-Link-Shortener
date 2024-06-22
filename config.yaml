@@ -1,0 +1,12 @@
+server:
+  port: 8080
+  host: "localhost"
+
+shortcodes:
+  shortcode_universe: "abcdefghijklmnopqrstuvwxyz"
+  shortcode_length: 6
+
+auth:
+  root_username: "root"
+  root_password: "root"
+  api_key_length: 32

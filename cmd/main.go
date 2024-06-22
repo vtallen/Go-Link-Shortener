@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
@@ -150,5 +151,5 @@ func main() {
 		return HandleAddLink(c, db, config, &data)
 	})
 
-	e.Logger.Fatal(e.Start(":42069")) // Run the server
+	e.Logger.Fatal(e.Start(":" + strconv.Itoa(config.Server.Port))) // Run the server
 }

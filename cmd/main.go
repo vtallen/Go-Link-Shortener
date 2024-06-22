@@ -31,8 +31,9 @@ func newTemplate() *Templates {
 }
 
 type ShortcodeForm struct {
-	URL    string
-	Result string
+	URL      string
+	Result   string
+	HasError bool
 }
 
 type IndexData struct {
@@ -116,7 +117,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Logger())
-	data := IndexData{Title: "Data passing is happening", ShortcodeForm: ShortcodeForm{URL: "startpage.com", Result: "untitled"}}
+	data := IndexData{}
 	data.Server = &config.Server
 
 	e.Static("/images", "images")

@@ -27,19 +27,37 @@
             }} value="{{ urlquery .ShortcodeForm.URL }}" {{ end }} required>
           <button type="submit" class="btn btn-primary input-group-append">Submit</button>
         </div>
+
+
         <div id="result">
           {{ if .ShortcodeForm.Result }}
-          <div class="alert alert-success" role="alert">
-            <p>Link: <a target="_blank" href="/{{ .ShortcodeForm.Result }}
-              ">{{ .Server.Host }}/{{ .ShortcodeForm.Result }}</a></p>
-
-
-            {{ end }}
-
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <p>Link: <a target="_blank" href="/{{ .ShortcodeForm.Result }}">{{ .Server.Host }}/{{ .ShortcodeForm.Result
+                }}</a></p>
           </div>
-      </form>
+          {{ end }}
+        </div>
+        <!-- <div id="result"> -->
+        <!--   {{ if .ShortcodeForm.Result }} -->
+        <!--   <div class="alert alert-success" role="alert"> -->
+        <!--     <p>Link: <a target="_blank" href="/{{ .ShortcodeForm.Result }} -->
+        <!--       ">{{ .Server.Host }}/{{ .ShortcodeForm.Result }}</a></p> -->
+
+
+        <!--     {{ end }} -->
+        <!--   </div> -->
+
+        {{ if .ShortcodeForm.HasError }}
+        <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          <p>There was an error submitting the URL, please try again</p>
+        </div>
+        {{ end }}
     </div>
+    </form>
   </div>
+</div>
 </div>
 {{ end }}
 

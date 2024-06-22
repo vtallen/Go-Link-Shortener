@@ -13,8 +13,8 @@ import (
 
 type Link struct {
 	ID        int
-	shortcode string
-	url       string
+	Shortcode string
+	Url       string
 }
 
 type User struct {
@@ -25,9 +25,8 @@ type User struct {
 }
 
 type APIKey struct {
-	key         string
-	user        string
-	permissions string
+	key  string
+	user string
 }
 
 func SetupDB(db *sql.DB) {
@@ -81,7 +80,7 @@ func GenShortcode(universe string, maxchars int) (string, int) {
 
 func GetLink(db *sql.DB, id int) (*Link, error) {
 	var link Link
-	err := db.QueryRow("SELECT id, url FROM links WHERE id = ?", id).Scan(&link.ID, &link.url)
+	err := db.QueryRow("SELECT id, url FROM links WHERE id = ?", id).Scan(&link.ID, &link.Url)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +135,7 @@ func GetAllLinks(db *sql.DB) []Link {
 	var links []Link
 	for rows.Next() {
 		var link Link
-		if err := rows.Scan(&link.ID, &link.shortcode, &link.url); err != nil {
+		if err := rows.Scan(&link.ID, &link.Shortcode, &link.Url); err != nil {
 			log.Fatal(err.Error())
 		}
 
@@ -155,7 +154,7 @@ func GetAPIKeys(db *sql.DB) []APIKey {
 	var keys []APIKey
 	for rows.Next() {
 		var key APIKey
-		if err := rows.Scan(&key.key, &key.user, &key.permissions); err != nil {
+		if err := rows.Scan(&key.key, &key.user); err != nil {
 			log.Fatal(err.Error())
 		}
 
@@ -169,7 +168,7 @@ func PrintLinksTable(db *sql.DB) {
 	var links []Link = GetAllLinks(db)
 
 	for idx := 0; idx < len(links); idx++ {
-		fmt.Printf("id: %d | shortcode: %s | url: %s\n", links[idx].ID, links[idx].shortcode, links[idx].url)
+		fmt.Printf("id: %d | shortcode: %s | url: %s\n", links[idx].ID, links[idx].Shortcode, links[idx].Url)
 	}
 }
 
@@ -185,7 +184,7 @@ func PrintAPIKeys(db *sql.DB) {
 	var apikeys []APIKey = GetAPIKeys(db)
 
 	for idx := 0; idx < len(apikeys); idx++ {
-		fmt.Printf("key: %s | user: %s | permissions: %s\n", apikeys[idx].key, apikeys[idx].user, apikeys[idx].permissions)
+		fmt.Printf("key: %s | user: %s\n", apikeys[idx].key, apikeys[idx].user)
 	}
 }
 

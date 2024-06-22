@@ -1,3 +1,6 @@
+// Includes utilities for generating random IDs and converting between base-10 and base-N representations
+// This gets used to create shortcodes for a database
+
 package codegen
 
 import (

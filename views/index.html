@@ -7,9 +7,8 @@
 
 <body>
   <div id="main-content" class="container mt-4">
-    <p>Enter a link to generate a shortcode</p>
-    <p>{{ .Title }}</p>
-    {{ template "create-shortcode" .}}
+    <h1 class="text-center display-5">Enter a URL to generate a short link</h1>
+    {{ template "shortcode-form" .}}
   </div>
 
 
@@ -18,31 +17,30 @@
 </html>
 {{ end }}
 
-{{ block "create-shortcode" . }}
-<div class="container">
+{{ block "shortcode-form" . }}
+<div class="container" id="create-shortcode-form">
   <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
-      <form id="urlForm" hx-post="/create" hx-trigger="submit" hx-target="#result">
+      <form id="urlForm" hx-post="/create" hx-trigger="submit" hx-target="#create-shortcode-form" hx-swap="outerHTML">
         <div class="input-group mb-3">
-          <input name="url" type="url" class="form-control" placeholder="https://example.com" required>
+          <input name="url" type="url" class="form-control" placeholder="https://example.com" {{ if .ShortcodeForm.URL
+            }} value="{{ urlquery .ShortcodeForm.URL }}" {{ end }} required>
           <button type="submit" class="btn btn-primary input-group-append">Submit</button>
         </div>
-        <div id="result"></div>
+        <div id="result">
+          {{ if .ShortcodeForm.Result }}
+          <div class="alert alert-success" role="alert">
+            <p>Link: <a target="_blank" href="/{{ .ShortcodeForm.Result }}
+              ">{{ .Server.Host }}/{{ .ShortcodeForm.Result }}</a></p>
+
+
+            {{ end }}
+
+          </div>
       </form>
     </div>
   </div>
 </div>
-{{ end }}
-
-{{ block "old-create-shortcode" .}}
-<form id="urlForm" class="w-100" style="max-width: 400px;" hx-post="/create" hx-trigger="submit" hx-target="#result"
-  hx-swap="innerHTML">
-  url: <input name="url" type="url" class="" placeholder="https://example.com" required>
-  <button type="submit" class="btn btn-primary">Submit</button>
-
-  <div id="result">
-  </div>
-</form>
 {{ end }}
 
 {{ block "head" .}}

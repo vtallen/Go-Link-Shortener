@@ -37,6 +37,7 @@ type ShortcodeForm struct {
 
 type IndexData struct {
 	ShortcodeForm ShortcodeForm
+	Server        *Server
 	Title         string
 	Shortcode     string
 }
@@ -53,8 +54,8 @@ type Auth struct {
 }
 
 type Server struct {
-	Domain string `yaml:"domain"`
-	Port   string `yaml:"port"`
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
 }
 
 type Config struct {
@@ -115,7 +116,8 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Logger())
-	data := IndexData{Title: "Data passing is happening"}
+	data := IndexData{Title: "Data passing is happening", ShortcodeForm: ShortcodeForm{URL: "startpage.com", Result: "untitled"}}
+	data.Server = &config.Server
 
 	e.Static("/images", "images")
 	e.Static("/css", "css")
@@ -144,7 +146,7 @@ func main() {
 		// }
 
 		// return c.String(200, "url is empty")
-		return HandleAddLink(c, db, config)
+		return HandleAddLink(c, db, config, &data)
 	})
 
 	e.Logger.Fatal(e.Start(":42069")) // Run the server

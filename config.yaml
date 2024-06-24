@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8080 
   host: "localhost"
 
 shortcodes:
@@ -9,4 +9,7 @@ shortcodes:
 auth:
   root_username: "root"
   root_password: "root"
+  tls_cert: "cert.pem"
+  tls_key: "key.pem"
+  cookie_secret: "secret"
   api_key_length: 32

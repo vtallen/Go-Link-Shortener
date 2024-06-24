@@ -13,8 +13,8 @@ import (
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
 	"gopkg.in/yaml.v2"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type Templates struct {
@@ -31,19 +31,49 @@ func newTemplate() *Templates {
 	}
 }
 
+/*
+* Name: IndexData
+*
+* Description: This struct is used to pass data to the index page.
+ */
+type IndexData struct {
+	ShortcodeForm ShortcodeForm
+	Server        *Server
+}
+
+/*
+* Name: LoginData
+*
+* Description: This struct is used to pass data to the login page.
+ */
+type LoginData struct {
+	LoginForm LoginForm
+	HasError  bool
+	ErrorText string
+}
+
+type LoginForm struct {
+	Email    string
+	Password string
+}
+
+type RegisterData struct {
+	RegisterForm RegisterForm
+	HasError     bool
+	ErrorText    string
+	Success      bool
+}
+
+type RegisterForm struct {
+	Email    string
+	Password string
+}
+
 type ShortcodeForm struct {
 	URL      string
 	Result   string
 	HasError bool
 }
-
-type IndexData struct {
-	ShortcodeForm ShortcodeForm
-	Server        *Server
-	Title         string
-	Shortcode     string
-}
-
 type Shortcodes struct {
 	ShortcodeLength int    `yaml:"shortcode_length"`
 	Universe        string `yaml:"shortcode_universe"`
@@ -53,6 +83,9 @@ type Auth struct {
 	ApiKeyLen    int    `yaml:"api_key_length"`
 	RootUsername string `yaml:"root_username"`
 	RootPassword string `yaml:"root_password"`
+	TLSCert      string `yaml:"tls_cert"`
+	TLSKey       string `yaml:"tls_key"`
+	CookieSecret string `yaml:"cookie_secret`
 }
 
 type Server struct {
@@ -61,9 +94,6 @@ type Server struct {
 }
 
 type Config struct {
-	MaxChars   int
-	ApiKeyLen  int
-	Universe   string
 	Shortcodes Shortcodes
 	Auth       Auth
 	Server     Server
@@ -115,20 +145,29 @@ func main() {
 	fmt.Println("inserted a link | id: %d | shortcode: %s | url: %s\n", id, shortcode, url)
 
 	PrintLinksTable(db)
+	PrintUsersTable(db)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
-	data := IndexData{}
-	data.Server = &config.Server
+	// e.Use(middleware.CORS())
+	// e.Use(middleware.Logger())
+
+	// Sessions setup
+
+	// e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 
 	e.Static("/images", "images")
 	e.Static("/css", "css")
 
 	e.Renderer = newTemplate() // Load the templates
 
+	// Setup data structs for the different pages
+	indexData := IndexData{}
+	indexData.Server = &config.Server
+
 	// Serve the index page
 	e.GET("/", func(c echo.Context) error {
-		return c.Render(200, "index", data)
+		return c.Render(200, "index", indexData)
 	})
 
 	// Handle use of the redirect function
@@ -138,18 +177,25 @@ func main() {
 
 	// Endpoint for the link creation form
 	e.POST("/create", func(c echo.Context) error {
-		// url := c.FormValue("url")
-		// if url != "" {
-		// 	fmt.Println(url)
-		// 	codegen.GenRandID(config.Universe, config.MaxChars)
-		// 	fmt.Printf("\n\n\n\n %d", id)
-		// 	return c.String(200, "shortcode: abcd")
-		// 	// return c.Render(200, "index", CreateShortcodeData{Shortcode: "test", Title: "This is from /create"})
-		// }
-
-		// return c.String(200, "url is empty")
-		return HandleAddLink(c, db, config, &data)
+		return HandleAddLink(c, db, config, &indexData)
 	})
 
-	e.Logger.Fatal(e.Start(":" + strconv.Itoa(config.Server.Port))) // Run the server
+	loginData := LoginData{} // Data used by login/register pages
+
+	e.GET("/login", func(c echo.Context) error {
+		return HandleLoginPage(c, &loginData, config)
+	})
+	e.POST("/login", func(c echo.Context) error {
+		return nil
+	})
+
+	registerData := RegisterData{}
+	e.GET("/register", func(c echo.Context) error {
+		return HandleRegisterPage(c, &registerData, config)
+	})
+	e.POST("/register", func(c echo.Context) error {
+		return HandleRegisterSession(c, db, &registerData, config)
+	})
+
+	e.Logger.Fatal(e.StartTLS(":"+strconv.Itoa(config.Server.Port), config.Auth.TLSCert, config.Auth.TLSKey)) // Run the server
 }

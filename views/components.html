@@ -1,0 +1,59 @@
+{{ block "head" .}}
+
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/htmx.org/dist/htmx.min.js"></script>
+  <link rel="stylesheet" href="/css/index.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+</head>
+
+{{ end }}
+
+{{ block "navbar" .}}
+<div id="navbar">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Link Shortener</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon d-none"></span>
+        <i class="fa fa-user-circle fa-lg"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link active" href="#" hx-get="home.html" hx-target="#main-content">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" hx-get="about.html" hx-target="#main-content">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" hx-get="contact.html" hx-target="#main-content">Contact</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</div>
+
+{{ end }}
+
+{{ block "404" .}}
+
+{{ template "head" . }}
+{{ template "navbar" . }}
+
+<body>
+  <div id="main-content" class="container mt-4">
+    <p>404, not found</p>
+  </div>
+</body>
+
+{{ end }}

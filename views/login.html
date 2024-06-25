@@ -14,7 +14,8 @@
   {{ if .AlreadyLoggedIn }}
   <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    <p>Already logged in. <a target="_self" href="/logout">Logout?</a></p>
+    <!-- Sends a get request to /logout which returns a script that redirects to the login page -->
+    <p>Already logged in. <a hx-get="/logout">Logout</a></p>
   </div>
 
   {{ else }}

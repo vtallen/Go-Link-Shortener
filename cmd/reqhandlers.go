@@ -88,7 +88,7 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *LoginData, config *Con
 	}
 
 	// Check if the password is correct
-	err = user.CheckPassword(password)
+	err = CheckPassword(user.Password, password)
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Either the user does not exist or the password is incorrect"
@@ -152,7 +152,12 @@ func HandleLogout(c echo.Context, config *Config) error {
 		return c.Render(http.StatusMovedPermanently, "error-page", ErrorPageData{ErrorText: "Error saving session, could not log out"})
 	}
 
-	return c.Redirect(http.StatusMovedPermanently, "/login")
+	// c.Response().Header().Set("HX-Redirect", "/login")
+	// c.Response().Header().Set("HX-Refresh", "true")
+	// c.Response().Header().Set("HX-Replace-Url", "/login")
+	// return c.Redirect(http.StatusMovedPermanently, "/login")
+
+	return c.String(200, `<script>window.location.href="/login"</script>`)
 }
 
 func HandleRegisterPage(c echo.Context, data *RegisterData, config *Config) error {

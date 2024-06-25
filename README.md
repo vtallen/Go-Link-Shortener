@@ -5,6 +5,7 @@ This project is a simple bitly clone that shortens URLs. The backend is written 
 This is still a WIP, below is the features that will be implemented in the future:
 
 Urgent:
+* Either logout doesn't work or my page restriction is broken. Figure this out
 * Consolidation of all user/session management to its own go file
 * Redirection to user page after registration (Do after session management is consolidated)
 * Server side validation of login sessions

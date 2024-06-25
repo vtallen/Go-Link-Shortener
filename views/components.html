@@ -20,12 +20,17 @@
 <div id="navbar">
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Link Shortener</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon d-none"></span>
-        <i class="fa fa-user-circle fa-lg"></i>
-      </button>
+      <a class="navbar-brand" href="/">Link Shortener</a>
+
+      <div class="d-flex align-items-center">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" style="height:35px;">
+
+          <span class="navbar-toggler-icon d-none"></span>
+          <i class="fa fa-user-circle fa-lg"></i>
+        </button>
+      </div>
+
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
           <li class="nav-item">
@@ -37,23 +42,33 @@
           <li class="nav-item">
             <a class="nav-link" href="#" hx-get="contact.html" hx-target="#main-content">Contact</a>
           </li>
+
         </ul>
       </div>
+
+      <button class="btn btn-link d-none d-lg-block" type="button"
+        onclick="window.open('https://github.com/vtallen/Go-Link-Shortener', '_blank')">
+        <img src="/images/github-mark.svg" alt="GitHub Mark" width="25px" height="25px">
+      </button>
+
     </div>
   </nav>
 </div>
 
 {{ end }}
 
-{{ block "404" .}}
 
-{{ template "head" . }}
-{{ template "navbar" . }}
+{{ block "error-page" .}}
+<!DOCTYPE html>
+{{ template "head" .}}
+{{ template "navbar" .}}
 
 <body>
   <div id="main-content" class="container mt-4">
-    <p>404, not found</p>
+    <h1 class="text-center display-5">Error</h1>
+    <div class="alert alert-danger fade show" role="alert">
+      <p>{{ .ErrorText }}</p>
+    </div>
   </div>
 </body>
-
 {{ end }}

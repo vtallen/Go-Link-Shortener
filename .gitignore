@@ -1,2 +1,5 @@
 *.db
+**/tmp/
 tmp/
+*.key
+*.pem

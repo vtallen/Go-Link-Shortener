@@ -1,3 +1,33 @@
+{{ block "login-form" .}}
+<form id="login-form" hx-post="/login" hx-trigger="submit" hx-target="#login-form" hx-swap="innerHTML">
+  <div class="input-group mb-3">
+    <input name="email" type="text" class="form-control" placeholder="Email" {{ if .LoginForm.Email }}
+      value="{{ .LoginForm.Email }}" {{ end }}required>
+  </div>
+  <div class="input-group mb-3">
+    <input name="password" type="password" class="form-control" placeholder="Password" required>
+  </div>
+  <div class="input-group mb-3">
+    <button type="submit" class="btn btn-primary input-group-append">Login</button>
+  </div>
+  {{ if .HasError }}
+  {{ if .AlreadyLoggedIn }}
+  <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <p>Already logged in. <a target="_self" href="/logout">Logout?</a></p>
+  </div>
+
+  {{ else }}
+  <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <p>Error: {{ .ErrorText }}</p>
+  </div>
+  {{ end }}
+  {{ end }}
+</form>
+
+{{ end }}
+
 {{ block "login" .}}
 <!DOCTYPE html>
 {{ template "head" . }}
@@ -6,24 +36,10 @@
 <body>
   <div id="main-content" class="container mt-4">
     <h1 class="text-center display-5">Login</h1>
-    <div class="container" id="login-form">
+    <div class="container">
       <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-6">
-          <form id="loginForm" hx-post="/login" hx-trigger="submit" hx-target="#login-form" hx-swap="outerHTML">
-            <div class="input-group mb-3">
-              <input name="email" type="text" class="form-control" placeholder="Email" required>
-            </div>
-            <div class="input-group mb-3">
-              <input name="password" type="password" class="form-control" placeholder="Password" required>
-            </div>
-            <div class="input-group mb-3">
-              <button type="submit" class="btn btn-primary input-group-append">Login</button>
-            </div>
-            <!-- <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert"> -->
-            <!--   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button> -->
-            <!--   <p>There was an error logging in, please try again</p> -->
-            <!-- </div> -->
-          </form>
+          {{ template "login-form" .}}
           <p class="text-center">Don't have an account? <a href="/register">Register here</a></p>
         </div>
       </div>

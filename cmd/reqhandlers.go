@@ -4,10 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"net/mail"
 	"net/url"
 	"strings"
 
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
 )
@@ -20,7 +23,8 @@ func HandleRedirect(c echo.Context, db *sql.DB, config *Config) error {
 	// Query the db for the link
 	link, err := GetLink(db, id)
 	if err != nil {
-		return c.Render(404, "404", nil) // Show the not found page if link does not exist
+		errData := ErrorPageData{ErrorText: "404, link does not exist"}
+		return c.Render(404, "error-page", errData) // Show the not found page if link does not exist
 	}
 
 	return c.Redirect(302, link.Url) // If a url exists, redirect the user to it
@@ -72,20 +76,83 @@ func HandleLoginPage(c echo.Context, data *LoginData, config *Config) error {
 func HandleLoginSession(c echo.Context, db *sql.DB, data *LoginData, config *Config) error {
 	email := c.FormValue("email")
 	password := c.FormValue("password")
-	fmt.Print(email + password)
 
 	// Check if the user exists
 	user, err := GetUserByEmail(db, email)
 	if err != nil {
 		data.HasError = true
-		data.ErrorText = "User does not exist"
-		return c.Render(200, "login", data)
+		data.ErrorText = "Either the user does not exist or the password is incorrect"
+		data.LoginForm.Email = email
+		c.Logger().Info("failed login, user does not exist: " + email)
+		return c.Render(200, "login-form", data)
 	}
-	fmt.Println(user)
 
-	// TODO finish
+	// Check if the password is correct
+	err = user.CheckPassword(password)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Either the user does not exist or the password is incorrect"
+		data.LoginForm.Email = email
+		c.Logger().Info("failed login for user: " + user.Email)
+		return c.Render(200, "login-form", data)
+	}
 
-	return nil
+	// get the session
+	sess, err := session.Get("session", c)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Error creating session"
+		data.LoginForm.Email = email
+		c.Logger().Warn("Error creating session: " + err.Error() + " | email: " + email)
+		return c.Render(200, "login-form", data)
+	}
+
+	// Validate that user is not logged in already
+	if sess.Values["userId"] != nil {
+		data.HasError = true
+		data.AlreadyLoggedIn = true
+		data.ErrorText = "User already logged in"
+		c.Logger().Info("User already logged in, email: " + email)
+		return c.Render(200, "login-form", data)
+	}
+
+	sess.Options = &sessions.Options{
+		MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
+		HttpOnly: true,
+	}
+
+	sess.Values["userId"] = user.Id
+
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		data.HasError = true
+		data.ErrorText = "Error saving session"
+		data.LoginForm.Email = email
+		c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
+		return c.Render(200, "login-form", data)
+	}
+
+	data.HasError = false
+	// A kind of hacky solution for a redirect I found here: https://stackoverflow.com/questions/70618200/how-to-implement-a-redirect-with-htmx/70618201#70618201
+
+	c.Response().Header().Set("HX-Redirect", "/user")
+	return c.String(http.StatusMovedPermanently, "redirecting")
+	// c.Response().Header().Set("HX-Push-URL", "/user")
+	// return c.Redirect(http.StatusMovedPermanently, "/user")
+}
+
+func HandleLogout(c echo.Context, config *Config) error {
+	sess, err := session.Get("session", c)
+	if err != nil {
+		return c.Render(http.StatusMovedPermanently, "error-page", ErrorPageData{ErrorText: "Error getting session, could not log out"})
+	}
+
+	sess.Values["userId"] = nil
+
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return c.Render(http.StatusMovedPermanently, "error-page", ErrorPageData{ErrorText: "Error saving session, could not log out"})
+	}
+
+	return c.Redirect(http.StatusMovedPermanently, "/login")
 }
 
 func HandleRegisterPage(c echo.Context, data *RegisterData, config *Config) error {
@@ -94,7 +161,6 @@ func HandleRegisterPage(c echo.Context, data *RegisterData, config *Config) erro
 
 func HandleRegisterSession(c echo.Context, db *sql.DB, data *RegisterData, config *Config) error {
 	email := c.FormValue("email")
-	// fmt.Println(email)
 	password := c.FormValue("password")
 
 	// validate email format
@@ -129,7 +195,7 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *RegisterData, confi
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Error creating account"
-		c.Logger().Error("Error hashing password for new user " + email + ": " + err.Error())
+		c.Logger().Warn("Error hashing password for new user " + email + ": " + err.Error())
 		return c.Render(200, "register-form", data)
 	}
 
@@ -138,13 +204,49 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *RegisterData, confi
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Error adding user"
-		c.Logger().Error(err.Error())
+		c.Logger().Warn(err.Error())
 		return c.Render(200, "register-form", data)
+	}
+
+	c.Logger().Warn("Added user " + email + " to the database")
+
+	// create the session
+	sess, err := session.Get("session", c)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Error creating session"
+		c.Logger().Warn("Error creating session: " + err.Error() + " | email: " + email)
+		return c.Render(200, "register-form", data)
+	}
+
+	sess.Options = &sessions.Options{
+		MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
+		HttpOnly: true,
+	}
+
+	id, err := GetUserId(db, email)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Error creating session"
+		c.Logger().Info("Error getting user id while creating session: " + err.Error() + " | email: " + email)
+		return c.Render(200, "register-form", data)
+	}
+
+	sess.Values["userId"] = id
+
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		data.HasError = true
+		data.ErrorText = "Error creating session"
+		c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
+		return err
 	}
 
 	data.HasError = false
 	data.Success = true
-	c.Logger().Info("Added user " + email + " to the database")
 
 	return c.Render(200, "register-form", data)
+}
+
+func HandleUserPage(c echo.Context, db *sql.DB, data *UserPageData, config *Config) error {
+	return c.Render(200, "user-homepage", data)
 }

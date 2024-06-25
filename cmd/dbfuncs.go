@@ -156,7 +156,18 @@ func GetUser(db *sql.DB, id int) (*UserLogin, error) {
 	return &user, nil
 }
 
+func GetUserId(db *sql.DB, email string) (int, error) {
+	var id int
+	err := db.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
 func SetupDB(db *sql.DB) {
+	fmt.Println("\n\nSetting up database\n\n")
 	// Create the links table if it doesn't exist
 	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY, shortcode TEXT, url TEXT)")
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 
+	"github.com/vtallen/go-link-shortener/internal/sessmngt"
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
 )
 
@@ -101,15 +102,15 @@ func DeleteLink(db *sql.DB, id int) error {
 	return err
 }
 
-func GetAllUsers(db *sql.DB) []UserLogin {
+func GetAllUsers(db *sql.DB) []sessmngt.UserLogin {
 	rows, err := db.Query("SELECT email, username, password, permissions FROM users")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	var users []UserLogin
+	var users []sessmngt.UserLogin
 	for rows.Next() {
-		var user UserLogin
+		var user sessmngt.UserLogin
 		if err := rows.Scan(&user.Email, &user.Username, &user.Password, &user.Permissions); err != nil {
 			log.Fatal(err.Error())
 		}
@@ -167,7 +168,7 @@ func PrintLinksTable(db *sql.DB) {
 }
 
 func PrintUsersTable(db *sql.DB) {
-	var users []UserLogin = GetAllUsers(db)
+	var users []sessmngt.UserLogin = GetAllUsers(db)
 
 	for idx := 0; idx < len(users); idx++ {
 		fmt.Printf("email: %s | username: %s | password: %s | permissions: %s\n", users[idx].Email, users[idx].Username, users[idx].Password, users[idx].Permissions)

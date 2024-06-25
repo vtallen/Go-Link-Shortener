@@ -1,8 +1,8 @@
 TARGET := server
 
-all: tls
-	go build -o $(TARGET) cmd/
-	air
+all: 
+	go build cmd/.
+	# mv main $(TARGET)
 
 tls: # Generates a testing certificate
 	go run /usr/local/go/src/crypto/tls/generate_cert.go --host localhost
@@ -12,7 +12,10 @@ run:
 	air
 
 lines: # Shows how many lines of code are in the project
-	cat views/* cmd/* pkg/codegen/* | wc -l
+	cat views/* cmd/* pkg/codegen/* internal/sessmngt/* | wc -l
+
+build:
+	go build cmd/.
 
 clean:
 	rm -r -f tmp

@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/vtallen/go-link-shortener/internal/sessmngt"
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
 )
 
@@ -78,7 +79,7 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *LoginData, config *Con
 	password := c.FormValue("password")
 
 	// Check if the user exists
-	user, err := GetUserByEmail(db, email)
+	user, err := sessmngt.GetUserByEmail(db, email)
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Either the user does not exist or the password is incorrect"
@@ -88,7 +89,7 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *LoginData, config *Con
 	}
 
 	// Check if the password is correct
-	err = CheckPassword(user.Password, password)
+	err = sessmngt.CheckPassword(user.Password, password)
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Either the user does not exist or the password is incorrect"
@@ -186,7 +187,7 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *RegisterData, confi
 	username := splitEmail[0]
 
 	// Check if the user exists
-	usr, err := GetUserByEmail(db, email)
+	usr, err := sessmngt.GetUserByEmail(db, email)
 	// fmt.Println(err + "\n\n\n")
 	if err == nil {
 		data.HasError = true
@@ -196,7 +197,7 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *RegisterData, confi
 	}
 
 	// Hash the password
-	hashedPassword, err := HashPassword(password)
+	hashedPassword, err := sessmngt.HashPassword(password)
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Error creating account"
@@ -205,7 +206,7 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *RegisterData, confi
 	}
 
 	// Add the user to the database
-	err = AddUser(db, email, username, hashedPassword, "user")
+	err = sessmngt.AddUser(db, email, username, hashedPassword, "user")
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Error adding user"
@@ -229,7 +230,7 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *RegisterData, confi
 		HttpOnly: true,
 	}
 
-	id, err := GetUserId(db, email)
+	id, err := sessmngt.GetUserId(db, email)
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Error creating session"

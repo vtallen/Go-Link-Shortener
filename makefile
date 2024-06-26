@@ -12,7 +12,7 @@ run:
 	air
 
 lines: # Shows how many lines of code are in the project
-	cat views/* cmd/* pkg/codegen/* internal/sessmngt/* | wc -l
+	cat views/* cmd/* pkg/codegen/* internal/sessmngt/* internal/conf/* internal/sessmngt/* | wc -l
 
 build:
 	go build cmd/.

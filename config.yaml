@@ -11,6 +11,7 @@ auth:
   root_password: "root" # Site admin user password
   tls_cert: "cert.pem" # Path to TLS certificate
   tls_key: "key.pem" # Path to TLS key
-  cookie_max_age_days: 7 # Cookie max age in days 
+  cookie_max_age_days: 7 # Cookie max age in days REMOVE LATER AFTER SESSIONS REFACTOR
+  cookie_max_age_seconds: 604800 # Cookie max age in seconds
   api_key_length: 32 # Length of API key in characters
   cookie_secret: "secret"

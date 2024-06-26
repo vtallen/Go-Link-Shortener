@@ -89,8 +89,13 @@ func main() {
 	PrintLinksTable(db)
 	PrintUsersTable(db)
 
+	// Setup middleware
 	e.Use(middleware.Logger())
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Auth.CookieSecret))))
+
+	// Sends the database into echo.Context so that it can be accessed
+	e.Use(dbMiddleware(db))
+	// Setup db middleware
 
 	e.Static("/images", "images")
 	e.Static("/css", "css")
@@ -165,6 +170,17 @@ func main() {
 	e.GET("/:shortcode", func(c echo.Context) error {
 		return HandleRedirect(c, db, config)
 	})
+
+	testSession := sessmngt.UserSession{SessId: 12, UserId: 1}
+	testSession.StoreExpiryTime(5)
+	for true {
+		if testSession.IsValid() {
+			fmt.Println("Valid")
+		} else {
+			fmt.Println("Not valid")
+			break
+		}
+	}
 
 	e.Logger.Fatal(e.StartTLS(":"+strconv.Itoa(config.Server.Port), config.Auth.TLSCert, config.Auth.TLSKey)) // Run the server
 }

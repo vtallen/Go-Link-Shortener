@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 
+	"github.com/labstack/echo/v4"
 	"github.com/vtallen/go-link-shortener/internal/sessmngt"
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
 )
@@ -24,7 +25,6 @@ type APIKey struct {
 }
 
 func SetupDB(db *sql.DB) {
-	fmt.Println("\n\nSetting up database\n\n")
 	// Create the links table if it doesn't exist
 	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY, shortcode TEXT, url TEXT)")
 	if err != nil {
@@ -46,12 +46,27 @@ func SetupDB(db *sql.DB) {
 		panic("DB setup failed, table users")
 	}
 	statement.Exec()
+
+	statement, err = db.Prepare("CREATE TABLE IF NOT EXISTS sessions (sessId INTEGER PRIMARY KEY, expiryTimeUnix INTEGER NOT NULL, userId INTEGER NOT NULL)")
+	if err != nil {
+		log.Fatal(err)
+		panic("DB setup failed, table sessions")
+	}
+}
+
+func dbMiddleware(db *sql.DB) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("db", db)
+			return next(c)
+		}
+	}
 }
 
 func GenUniqueID(db *sql.DB, universe string, maxchars int) (int, error) {
 	maxiters := 10000
 	idx := 0
-	for true {
+	for {
 		if idx > maxiters {
 			return 0, errors.New("genUniqueID timeout reached, no unique id found")
 		}
@@ -65,7 +80,7 @@ func GenUniqueID(db *sql.DB, universe string, maxchars int) (int, error) {
 		}
 	}
 
-	return 0, errors.New("genUniqueID this should not be possible to reach")
+	// return 0, errors.New("genUniqueID this should not be possible to reach")
 }
 
 func GenShortcode(universe string, maxchars int) (string, int) {

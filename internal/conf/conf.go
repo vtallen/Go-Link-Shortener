@@ -24,6 +24,7 @@ type Config struct {
 	Shortcodes Shortcodes
 	Auth       Auth
 	Server     Server
+	Database   Database
 }
 
 type Auth struct {
@@ -39,6 +40,10 @@ type Auth struct {
 type Server struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
+}
+
+type Database struct {
+	Path string `yaml:"path"`
 }
 
 type Shortcodes struct {

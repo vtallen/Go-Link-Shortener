@@ -18,7 +18,6 @@ Main Features/Issues to work on:
 
 
 Small fixes:
-* Set database file name/path with config
 * standardize order of handler func parameters
 * Modify UserLogin in cmd/ to use the pattern used in internal/sessmngt/database_funcs for UserSession
 * hCaptcha on register page

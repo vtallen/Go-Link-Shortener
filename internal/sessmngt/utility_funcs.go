@@ -2,6 +2,12 @@ package sessmngt
 
 import "golang.org/x/crypto/bcrypt"
 
+func CreateSession() {
+}
+
+func TeardownSession() {
+}
+
 /*
 * Function: HashPassword
 *

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"html/template"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -52,22 +51,21 @@ type ShortcodeForm struct {
 }
 
 func main() {
-	// Setup database connection
-	db, err := sql.Open("sqlite3", "./shortener.db")
+	config, err := conf.LoadConfig("config.yaml")
 	if err != nil {
-		log.Fatal(err)
+		panic("Could not load configuration file config.yaml, Error: " + err.Error())
+	}
+
+	// Setup database connection
+	db, err := sql.Open("sqlite3", config.Database.Path)
+	if err != nil {
+		panic("Could not setup database, Error: " + err.Error())
 	}
 	defer db.Close()
 
 	SetupDB(db)
 
 	e := echo.New() // Create the web server
-
-	// config := NewConfig()
-	config, err := conf.LoadConfig("config.yaml")
-	if err != nil {
-		e.Logger.Fatal(err.Error())
-	}
 
 	// insert, err := db.Prepare("INSERT INTO links (id, shortcode, url) VALUES (?, ?, ?)")
 	// if err != nil {
@@ -120,6 +118,7 @@ func main() {
 		return c.Render(200, "index", indexData)
 	})
 
+	// Page to display errors on
 	e.GET("/error", func(c echo.Context) error {
 		return c.Render(200, "error-page", errorPageData)
 	})
@@ -129,8 +128,13 @@ func main() {
 		return HandleAddLink(c, db, config, &indexData)
 	})
 
-	loginData := pagestructs.LoginData{} // Data used by login/register pages
+	// Endpoint that redirects the user to the stored url if it exists
+	e.GET("/:shortcode", func(c echo.Context) error {
+		return HandleRedirect(c, db, config)
+	})
 
+	loginData := pagestructs.LoginData{} // Data used by login/register pages
+	// Endpoint that handles serving the login page
 	e.GET("/login", func(c echo.Context) error {
 		loginData.HasError = false
 		loginData.ErrorText = ""
@@ -138,24 +142,31 @@ func main() {
 
 		return sessmngt.HandleLoginPage(c, &loginData, config)
 	})
+
+	// Endpoint that handles the submission of the login form on /login
 	e.POST("/login", func(c echo.Context) error {
 		return sessmngt.HandleLoginSession(c, db, &loginData, config)
 	})
 
+	// Endpoint that logs the user out and redirects them to the login page
 	e.GET("/logout", func(c echo.Context) error {
 		return sessmngt.HandleLogout(c, config)
 	})
 
+	// Endpoint that serves the register page
 	registerData := pagestructs.RegisterData{}
 	e.GET("/register", func(c echo.Context) error {
 		loginData.HasError = false
 		loginData.ErrorText = ""
 		return sessmngt.HandleRegisterPage(c, &registerData, config)
 	})
+
+	// Endpoint that handles the submission of the register form on /register
 	e.POST("/register", func(c echo.Context) error {
 		return sessmngt.HandleRegisterSession(c, db, &registerData, config)
 	})
 
+	// Endpoint for the user dashboard
 	userPageData := UserPageData{}
 	e.GET("/user", func(c echo.Context) error {
 		sess, err := session.Get("session", c)
@@ -169,11 +180,6 @@ func main() {
 		} else {
 			return c.Redirect(http.StatusMovedPermanently, "/login")
 		}
-	})
-
-	// Handle use of the redirect function
-	e.GET("/:shortcode", func(c echo.Context) error {
-		return HandleRedirect(c, db, config)
 	})
 
 	// testSession := sessmngt.UserSession{SessId: "12", UserId: 1}

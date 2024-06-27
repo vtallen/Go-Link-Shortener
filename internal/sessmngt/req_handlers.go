@@ -76,7 +76,6 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *pagestructs.LoginData,
 	}
 
 	data.HasError = false
-	// A kind of hacky solution for a redirect I found here: https://stackoverflow.com/questions/70618200/how-to-implement-a-redirect-with-htmx/70618201#70618201
 
 	c.Response().Header().Set("HX-Redirect", "/user")
 	return c.String(http.StatusMovedPermanently, "redirecting")
@@ -91,16 +90,15 @@ func HandleLogout(c echo.Context, config *conf.Config) error {
 	}
 
 	sess.Values["userId"] = nil
+	sess.Values["expiryTimeUnix"] = nil
 
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error saving session, could not log out"})
 	}
 
-	// c.Response().Header().Set("HX-Redirect", "/login")
-	// c.Response().Header().Set("HX-Refresh", "true")
-	// c.Response().Header().Set("HX-Replace-Url", "/login")
-	// return c.Redirect(http.StatusMovedPermanently, "/login")
-
+	// Feels kind of hacky, but I could not find a better/more reliable solution.
+	// Using the HTTP headers lead to some kind of race condition that messed up the session store.
+	// Or I just don't know how to do it properly (the more likely reason)
 	return c.String(200, `<script>window.location.href="/login"</script>`)
 }
 

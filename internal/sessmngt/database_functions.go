@@ -2,7 +2,6 @@ package sessmngt
 
 /*
 Need to do:
-- middleware to validate sessions for sepcified routes
 */
 
 import (
@@ -27,7 +26,7 @@ import (
 // }
 
 type UserSession struct {
-	SessId         int
+	SessId         string
 	ExpiryTimeUnix int64
 	UserId         int
 }
@@ -73,7 +72,7 @@ func (usr *UserSession) DeleteDB(db *sql.DB) error {
 * Session functions
 =======================================================
 */
-func GetSession(db *sql.DB, id int) (*UserSession, error) {
+func GetSession(db *sql.DB, id string) (*UserSession, error) {
 	var session *UserSession = &UserSession{}
 	err := db.QueryRow("SELECT sessID, expiryTimeUnix, userId FROM sessions WHERE id = ?").Scan(&session.SessId, &session.ExpiryTimeUnix, &session.UserId)
 	if err != nil {

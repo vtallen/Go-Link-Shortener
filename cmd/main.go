@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -14,7 +13,6 @@ import (
 	"github.com/vtallen/go-link-shortener/internal/conf"
 	"github.com/vtallen/go-link-shortener/internal/pagestructs"
 	"github.com/vtallen/go-link-shortener/internal/sessmngt"
-	"github.com/vtallen/go-link-shortener/pkg/codegen"
 
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -71,30 +69,28 @@ func main() {
 		e.Logger.Fatal(err.Error())
 	}
 
-	// fmt.Println("config.Auth.CookieSecret: ", config.Auth.CookieSecret)
-
-	insert, err := db.Prepare("INSERT INTO links (id, shortcode, url) VALUES (?, ?, ?)")
-	if err != nil {
-		log.Fatal(err)
-	}
-	var id int = codegen.GenRandID(config.Shortcodes.Universe, config.Shortcodes.ShortcodeLength)
-	var shortcode string = codegen.BaseTenToUniverse(id, config.Shortcodes.Universe)
-	url := "https://www.startpage.com"
-	_, err = insert.Exec(id, shortcode, url)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	fmt.Println("inserted a link | id: %d | shortcode: %s | url: %s\n", id, shortcode, url)
+	// insert, err := db.Prepare("INSERT INTO links (id, shortcode, url) VALUES (?, ?, ?)")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// var id int = codegen.GenRandID(config.Shortcodes.Universe, config.Shortcodes.ShortcodeLength)
+	// var shortcode string = codegen.BaseTenToUniverse(id, config.Shortcodes.Universe)
+	// url := "https://www.startpage.com"
+	// _, err = insert.Exec(id, shortcode, url)
+	// if err != nil {
+	// 	log.Fatal(err.Error())
+	// }
+	// fmt.Println("inserted a link | id: %d | shortcode: %s | url: %s\n", id, shortcode, url)
 
 	PrintLinksTable(db)
 	PrintUsersTable(db)
 
 	// Setup middleware
 	e.Use(middleware.Logger())
+	e.Use(dbMiddleware(db)) // Injects the database variable into the request context
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Auth.CookieSecret))))
 
 	// Sends the database into echo.Context so that it can be accessed
-	e.Use(dbMiddleware(db))
 	// Setup db middleware
 
 	e.Static("/images", "images")
@@ -112,6 +108,15 @@ func main() {
 		indexData.ShortcodeForm.URL = ""
 		indexData.ShortcodeForm.Result = ""
 		indexData.ShortcodeForm.HasError = false
+
+		// testdb := c.Get("db").(*sql.DB)
+		// var email string
+		// err := testdb.QueryRow("SELECT email FROM users WHERE email = ?", "root@root.com").Scan(&email)
+		// if err != nil {
+		// 	return err
+		// } else {
+		// 	fmt.Println("\n\n" + email + "\n\n")
+		// }
 		return c.Render(200, "index", indexData)
 	})
 
@@ -171,16 +176,16 @@ func main() {
 		return HandleRedirect(c, db, config)
 	})
 
-	testSession := sessmngt.UserSession{SessId: 12, UserId: 1}
-	testSession.StoreExpiryTime(5)
-	for true {
-		if testSession.IsValid() {
-			fmt.Println("Valid")
-		} else {
-			fmt.Println("Not valid")
-			break
-		}
-	}
+	// testSession := sessmngt.UserSession{SessId: "12", UserId: 1}
+	// testSession.StoreExpiryTime(5)
+	// for true {
+	// 	if testSession.IsValid() {
+	// 		fmt.Println("Valid")
+	// 	} else {
+	// 		fmt.Println("Not valid")
+	// 		break
+	// 	}
+	// }
 
 	e.Logger.Fatal(e.StartTLS(":"+strconv.Itoa(config.Server.Port), config.Auth.TLSCert, config.Auth.TLSKey)) // Run the server
 }

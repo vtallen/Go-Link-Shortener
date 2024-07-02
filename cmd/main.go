@@ -101,7 +101,7 @@ func main() {
 	// Setup data structs for the different pages
 	indexData := IndexData{}
 	indexData.Server = &config.Server
-	errorPageData := pagestructs.ErrorPageData{"No error"}
+	errorPageData := pagestructs.ErrorPageData{ErrorText: "No error"}
 
 	// Serve the index page
 	e.GET("/", func(c echo.Context) error {
@@ -171,17 +171,18 @@ func main() {
 	// Endpoint for the user dashboard
 	userPageData := UserPageData{}
 	e.GET("/user", func(c echo.Context) error {
-		sess, err := session.Get("session", c)
-		if err != nil {
-			errorPageData.ErrorText = "Error getting session"
-			return c.Render(302, "/error", errorPageData)
-		}
-		// TODO - actually validate sessions
-		if sess.Values["userId"] != nil {
-			return HandleUserPage(c, db, &userPageData, config)
-		} else {
-			return c.Redirect(http.StatusMovedPermanently, "/login")
-		}
+		// sess, err := session.Get("session", c)
+		// if err != nil {
+		// 	errorPageData.ErrorText = "Error getting session"
+		// 	return c.Render(302, "/error", errorPageData)
+		// }
+		// // TODO - actually validate sessions
+		// if sess.Values["userId"] != nil {
+		return c.String(http.StatusOK, "test")
+		return HandleUserPage(c, db, &userPageData, config)
+		// } else {
+		// 	return c.Redirect(http.StatusMovedPermanently, "/login")
+		// }
 	})
 
 	// testSession := sessmngt.UserSession{SessId: "12", UserId: 1}

@@ -3,6 +3,9 @@ TARGET := server
 all: 
 	cd cmd && go build -o ../$(TARGET) .	
 
+deb: clean all
+	./$(TARGET)
+
 tls: # Generates a testing certificate
 	go run /usr/local/go/src/crypto/tls/generate_cert.go --host localhost
 
@@ -19,5 +22,6 @@ build:
 clean:
 	rm -r -f tmp
 	rm -r -f $(TARGET)
+	rm -r -f shortener.db
 	# rm -f cert.pem
 	# rm -f key.pem

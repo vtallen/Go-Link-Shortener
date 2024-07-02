@@ -60,6 +60,8 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *pagestructs.LoginData,
 		return c.Render(200, "login-form", data)
 	}
 
+	// create a user session in the database
+
 	sess.Options = &sessions.Options{
 		MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
 		HttpOnly: true,
@@ -155,7 +157,7 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *pagestructs.Registe
 		return c.Render(200, "register-form", data)
 	}
 
-	c.Logger().Warn("Added user " + email + " to the database")
+	c.Logger().Info("Added user " + email + " to the database")
 
 	// create the session
 	sess, err := session.Get("session", c)

@@ -1,8 +1,39 @@
 package sessmngt
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"github.com/gorilla/sessions"
+	"github.com/vtallen/go-link-shortener/internal/conf"
+	"golang.org/x/crypto/bcrypt"
+)
 
-func CreateSession() {
+// This function should take the session and the supplied UserSession struct
+// Then store those values in the session and save it
+func CreateSessionCookie(sess *sessions.Session, userSession *UserSession, config conf.Config) {
+	// // Validate that user is not logged in already
+	// if sess.Values["userId"] != nil {
+	// 	data.HasError = true
+	// 	data.AlreadyLoggedIn = true
+	// 	data.ErrorText = "User already logged in"
+	// 	c.Logger().Info("User already logged in, email: " + email)
+	// 	return c.Render(200, "login-form", data)
+	// }
+
+	// 86400 is the number of seconds in a day
+	sess.Options = &sessions.Options{
+		MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
+		HttpOnly: true,
+	}
+
+	sess.Values["userId"] = userSession.UserId
+	sess.Values[""] = sess.ID
+
+	// if err := sess.Save(c.Request(), c.Response()); err != nil {
+	// 	data.HasError = true
+	// 	data.ErrorText = "Error saving session"
+	// 	data.LoginForm.Email = email
+	// 	c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
+	// 	return c.Render(200, "login-form", data)
+	// }
 }
 
 func TeardownSession() {

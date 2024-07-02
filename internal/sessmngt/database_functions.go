@@ -6,6 +6,7 @@ Need to do:
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 )
@@ -72,7 +73,7 @@ func (usr *UserSession) DeleteDB(db *sql.DB) error {
 * Session functions
 =======================================================
 */
-func GetSession(db *sql.DB, id string) (*UserSession, error) {
+func GetSessionStruct(db *sql.DB, sessId string) (*UserSession, error) {
 	var session *UserSession = &UserSession{}
 	err := db.QueryRow("SELECT sessID, expiryTimeUnix, userId FROM sessions WHERE id = ?").Scan(&session.SessId, &session.ExpiryTimeUnix, &session.UserId)
 	if err != nil {
@@ -208,4 +209,30 @@ func GetUserId(db *sql.DB, email string) (int, error) {
 	}
 
 	return id, nil
+}
+
+func GetAllSessions(db *sql.DB) []UserSession {
+	rows, err := db.Query("SELECT sessID, expiryTimeUnix, userId FROM sessions")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	var allSessions []UserSession
+	for rows.Next() {
+		var usrSess UserSession
+		if err := rows.Scan(&usrSess.SessId, &usrSess.ExpiryTimeUnix, &usrSess.UserId); err != nil {
+			log.Fatal(err.Error())
+		}
+
+		allSessions = append(allSessions, usrSess)
+	}
+
+	return allSessions
+}
+
+func PrintSessionTable(db *sql.DB) {
+	allSessions := GetAllSessions(db)
+	for idx := 0; idx < len(allSessions); idx++ {
+		fmt.Printf("sessID: %s | expiryTimeUnix: %d | usrId: %d\n", allSessions[idx].SessId, allSessions[idx].ExpiryTimeUnix, allSessions[idx].UserId)
+	}
 }

@@ -53,6 +53,7 @@ func SetupDB(db *sql.DB) {
 		log.Fatal(err)
 		panic("DB setup failed, table sessions")
 	}
+	statement.Exec()
 }
 
 func dbMiddleware(db *sql.DB) echo.MiddlewareFunc {

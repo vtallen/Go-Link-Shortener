@@ -80,13 +80,15 @@ func main() {
 	// }
 	// fmt.Println("inserted a link | id: %d | shortcode: %s | url: %s\n", id, shortcode, url)
 
-	PrintLinksTable(db)
-	PrintUsersTable(db)
+	// PrintLinksTable(db)
+	// PrintUsersTable(db)
+	sessmngt.PrintSessionTable(db)
 
 	// Setup middleware
 	e.Use(middleware.Logger())
 	e.Use(dbMiddleware(db)) // Injects the database variable into the request context
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Auth.CookieSecret))))
+	// e.Use(sessmngt.SessionMiddleware)
 
 	// Sends the database into echo.Context so that it can be accessed
 	// Setup db middleware
@@ -180,7 +182,7 @@ func main() {
 		} else {
 			return c.Redirect(http.StatusMovedPermanently, "/login")
 		}
-	})
+	}, sessmngt.SessionMiddleware)
 
 	// testSession := sessmngt.UserSession{SessId: "12", UserId: 1}
 	// testSession.StoreExpiryTime(5)

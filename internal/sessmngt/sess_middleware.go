@@ -20,28 +20,31 @@ func SessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		// Get the database from the context
 		db := c.Get("db").(*sql.DB)
 
-		// Check if a session exists, redirect to the login page if not
+		// Check if a session exists in the current session cookie, redirect to the login page if not
 		sentUsrIdInterface := sess.Values["userId"]
 		sentExpiryTimeUnixInterface := sess.Values["expiryTimeUnix"]
 		if sentUsrIdInterface == nil || sentExpiryTimeUnixInterface == nil {
 			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
-		// Try to convert the session values to the proper types
+		// Try to convert the session cookie values to the proper types
 		sentUsrId, okId := sentUsrIdInterface.(int)
 		sentExpiryTimeUnix, okTime := sentExpiryTimeUnixInterface.(int64)
+		// Type casts return bool not error
 		if !okId || !okTime {
 			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
 		// Validate if the session exists in the database,
 		// has a valid expiry time, user id, and session id
-		usrSess, err := GetSession(db, sess.ID)
+		usrSess, err := GetSessionStruct(db, sess.ID)
 		if err != nil || usrSess.UserId != sentUsrId || usrSess.ExpiryTimeUnix != sentExpiryTimeUnix || usrSess.SessId != sess.ID {
-			return c.Redirect(http.StatusMovedPermanently, "/login")
+			return c.Redirect(http.StatusMovedPermanently, "/login") // TODO : should this redirect to /logout? Check after valiadating everything else
 		}
 
 		// If all of the above goes ok, we can proceeed to the next middleware function
+		// Now we can assume in all further function calls that the session is valid
+		// As this function gets called each time the user attempts to visit a page
 		return next(c)
 	}
 }

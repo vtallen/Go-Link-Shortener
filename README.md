@@ -7,6 +7,7 @@ This is still a WIP, below is my current TODO for the project
 Main Features/Issues to work on:
 * In the login page's "You are already logged in" message, the logout button does not look like a link 
 * Server side validation of login sessions
+    - Might be vulnerable to sql injection, implement server side validation in all instances where data is taken from a user form and used by the server 
 * Make navbar interactive to show if you are logged in, only display register button if not logged in
 * Redirection to user page after registration or don't create a session until login (Do after session management is consolidated)
 * Link statistics for signed in users (Will need to figure out how to store on the backend)
@@ -26,7 +27,8 @@ Small fixes:
 * Make logging work to a file, and errors be more descriptive for where they happened
 * Add option for auto TLS, needs work on config for all fields
 * Redirect http to https
-* Check all handler functions to change any passing in of db, to using the db stored in echo.Context
+* Check all handler functions to change any passing in of db, to using the db stored in echo.Context.
+    - How I do it now is fine, but I had to make a middleware to get the database to the authentication middleware so I might as well take advantage 
 * Make the shortcode forms allow the submission of both links with https:// to start and without, not sure if this is nessicary 
 * Store the strings that get used as keys in sess.Values[] in a const somewhere for consistency
 

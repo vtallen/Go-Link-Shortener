@@ -27,7 +27,7 @@ import (
 // }
 
 type UserSession struct {
-	SessId         string
+	SessId         int64
 	ExpiryTimeUnix int64
 	UserId         int
 }
@@ -50,7 +50,7 @@ func (usr *UserSession) IsValid() bool {
 }
 
 func (usr *UserSession) StoreDB(db *sql.DB) error {
-	statement, err := db.Prepare("INSERT INTO sessions (sessId, expiryTimeUnix, userId) VALLUES (?, ?, ?)")
+	statement, err := db.Prepare("INSERT INTO sessions (sessId, expiryTimeUnix, userId) VALUES (?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -231,8 +231,10 @@ func GetAllSessions(db *sql.DB) []UserSession {
 }
 
 func PrintSessionTable(db *sql.DB) {
+	fmt.Println("got here")
 	allSessions := GetAllSessions(db)
+	fmt.Println(len(allSessions))
 	for idx := 0; idx < len(allSessions); idx++ {
-		fmt.Printf("sessID: %s | expiryTimeUnix: %d | usrId: %d\n", allSessions[idx].SessId, allSessions[idx].ExpiryTimeUnix, allSessions[idx].UserId)
+		fmt.Printf("sessID: %d | expiryTimeUnix: %d | usrId: %d\n", allSessions[idx].SessId, allSessions[idx].ExpiryTimeUnix, allSessions[idx].UserId)
 	}
 }

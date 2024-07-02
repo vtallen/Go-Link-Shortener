@@ -1,42 +1,64 @@
 package sessmngt
 
 import (
+	"crypto/rand"
+	"math"
+	"math/big"
+
 	"github.com/gorilla/sessions"
+	"github.com/labstack/echo/v4"
 	"github.com/vtallen/go-link-shortener/internal/conf"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Apparently the session ID for gorilla sessions does not get populated
+// if using a normal cookie, see: https://github.com/gorilla/sessions/issues/224
+// This code was found and modified from: https://reintech.io/blog/generating-random-numbers-in-go
+func GenSessionId() (int64, error) {
+	max := big.NewInt(math.MaxInt64)
+	randomNumber, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return 0, err
+	}
+
+	return randomNumber.Int64(), nil
+}
+
+func InvalidateSession(sess *sessions.Session, c echo.Context) error {
+	// Invalidates the session so it gets deleted
+	sess.Options.MaxAge = -1
+
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // This function should take the session and the supplied UserSession struct
 // Then store those values in the session and save it
-func CreateSessionCookie(sess *sessions.Session, userSession *UserSession, config conf.Config) {
-	// // Validate that user is not logged in already
-	// if sess.Values["userId"] != nil {
-	// 	data.HasError = true
-	// 	data.AlreadyLoggedIn = true
-	// 	data.ErrorText = "User already logged in"
-	// 	c.Logger().Info("User already logged in, email: " + email)
-	// 	return c.Render(200, "login-form", data)
-	// }
-
-	// 86400 is the number of seconds in a day
+func SetSessionCookie(sess *sessions.Session, user *UserLogin, config *conf.Config) (*UserSession, error) {
 	sess.Options = &sessions.Options{
 		MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
 		HttpOnly: true,
 	}
 
-	sess.Values["userId"] = userSession.UserId
-	sess.Values[""] = sess.ID
+	// Create the user session struct
+	var userSession UserSession
+	userSession.StoreExpiryTime(86400 * int64(config.Auth.CookieMaxAgeDays))
+	userSession.UserId = user.Id
+	sessId, err := GenSessionId()
+	if err != nil {
+		return nil, err
+	}
+	userSession.SessId = sessId
 
-	// if err := sess.Save(c.Request(), c.Response()); err != nil {
-	// 	data.HasError = true
-	// 	data.ErrorText = "Error saving session"
-	// 	data.LoginForm.Email = email
-	// 	c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
-	// 	return c.Render(200, "login-form", data)
-	// }
-}
+	// Set the user session values into the session cookie
+	sess.Values["sessId"] = userSession.SessId
+	sess.Values["expiryTimeUnix"] = userSession.ExpiryTimeUnix
+	sess.Values["userId"] = user.Id
 
-func TeardownSession() {
+	return &userSession, nil
 }
 
 /*

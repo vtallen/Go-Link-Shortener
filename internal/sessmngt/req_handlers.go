@@ -2,11 +2,11 @@ package sessmngt
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"net/mail"
 	"strings"
 
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/vtallen/go-link-shortener/internal/conf"
@@ -20,6 +20,8 @@ func HandleLoginPage(c echo.Context, data *pagestructs.LoginData, config *conf.C
 func HandleLoginSession(c echo.Context, db *sql.DB, data *pagestructs.LoginData, config *conf.Config) error {
 	email := c.FormValue("email")
 	password := c.FormValue("password")
+
+	// TODO: validate email is in correct format, prevent sql injection. mail.ParseAddress I think?
 
 	// Check if the user exists
 	user, err := GetUserByEmail(db, email)
@@ -62,16 +64,37 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *pagestructs.LoginData,
 
 	// create a user session in the database
 
-	sess.Options = &sessions.Options{
-		MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
-		HttpOnly: true,
+	// sess.Options = &sessions.Options{
+	// 	MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
+	// 	HttpOnly: true,
+	// }
+
+	// sess.Values["userId"] = user.Id
+
+	userSession, err := SetSessionCookie(sess, user, config)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Error creating session 1"
+		c.Logger().Info("Error generating session ID: " + err.Error() + " | email: " + email)
+		return c.Render(200, "login-form", data)
 	}
 
-	sess.Values["userId"] = user.Id
+	fmt.Println(userSession)
+
+	err = userSession.StoreDB(db)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Error creating session 2"
+		c.Logger().Info("Error storing session in DB: " + err.Error() + " | email: " + email)
+		return c.Render(200, "login-form", data)
+	}
+
+	// print("\n\n\n" + err.Error() + "\n\n\n")
+	// store the session in the database
 
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		data.HasError = true
-		data.ErrorText = "Error saving session"
+		data.ErrorText = "Error saving session 3"
 		data.LoginForm.Email = email
 		c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
 		return c.Render(200, "login-form", data)
@@ -91,10 +114,15 @@ func HandleLogout(c echo.Context, config *conf.Config) error {
 		return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error getting session, could not log out"})
 	}
 
-	sess.Values["userId"] = nil
-	sess.Values["expiryTimeUnix"] = nil
+	// sess.Values["userId"] = nil
+	// sess.Values["expiryTimeUnix"] = nil
 
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
+	// if err := sess.Save(c.Request(), c.Response()); err != nil {
+	// 	return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error saving session, could not log out"})
+	// }
+
+	err = InvalidateSession(sess, c)
+	if err != nil {
 		return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error saving session, could not log out"})
 	}
 
@@ -160,35 +188,35 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *pagestructs.Registe
 	c.Logger().Info("Added user " + email + " to the database")
 
 	// create the session
-	sess, err := session.Get("session", c)
-	if err != nil {
-		data.HasError = true
-		data.ErrorText = "Error creating session"
-		c.Logger().Warn("Error creating session: " + err.Error() + " | email: " + email)
-		return c.Render(200, "register-form", data)
-	}
+	// sess, err := session.Get("session", c)
+	// if err != nil {
+	// 	data.HasError = true
+	// 	data.ErrorText = "Error creating session"
+	// 	c.Logger().Warn("Error creating session: " + err.Error() + " | email: " + email)
+	// 	return c.Render(200, "register-form", data)
+	// }
 
-	sess.Options = &sessions.Options{
-		MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
-		HttpOnly: true,
-	}
+	// id, err := GetUserId(db, email)
+	// if err != nil {
+	// 	data.HasError = true
+	// 	data.ErrorText = "Error creating session"
+	// 	c.Logger().Info("Error getting user id while creating session: " + err.Error() + " | email: " + email)
+	// 	return c.Render(200, "register-form", data)
+	// }
 
-	id, err := GetUserId(db, email)
-	if err != nil {
-		data.HasError = true
-		data.ErrorText = "Error creating session"
-		c.Logger().Info("Error getting user id while creating session: " + err.Error() + " | email: " + email)
-		return c.Render(200, "register-form", data)
-	}
+	// sess.Values["userId"] = id
 
-	sess.Values["userId"] = id
+	// sess.Options = &sessions.Options{
+	// 	MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
+	// 	HttpOnly: true,
+	// }
 
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
-		data.HasError = true
-		data.ErrorText = "Error creating session"
-		c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
-		return err
-	}
+	// if err := sess.Save(c.Request(), c.Response()); err != nil {
+	// 	data.HasError = true
+	// 	data.ErrorText = "Error creating session"
+	// 	c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
+	// 	return err
+	// }
 
 	data.HasError = false
 	data.Success = true

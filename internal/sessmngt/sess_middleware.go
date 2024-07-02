@@ -23,22 +23,24 @@ func SessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		// Check if a session exists in the current session cookie, redirect to the login page if not
 		sentUsrIdInterface := sess.Values["userId"]
 		sentExpiryTimeUnixInterface := sess.Values["expiryTimeUnix"]
-		if sentUsrIdInterface == nil || sentExpiryTimeUnixInterface == nil {
+		sentSessIdInterface := sess.Values["sessId"]
+		if sentUsrIdInterface == nil || sentExpiryTimeUnixInterface == nil || sentSessIdInterface == nil {
 			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
 		// Try to convert the session cookie values to the proper types
 		sentUsrId, okId := sentUsrIdInterface.(int)
 		sentExpiryTimeUnix, okTime := sentExpiryTimeUnixInterface.(int64)
+		sentSessId, okSessId := sentSessIdInterface.(int64)
 		// Type casts return bool not error
-		if !okId || !okTime {
+		if !okId || !okTime || !okSessId {
 			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
 		// Validate if the session exists in the database,
 		// has a valid expiry time, user id, and session id
 		usrSess, err := GetSessionStruct(db, sess.ID)
-		if err != nil || usrSess.UserId != sentUsrId || usrSess.ExpiryTimeUnix != sentExpiryTimeUnix || usrSess.SessId != sess.ID {
+		if err != nil || usrSess.UserId != sentUsrId || usrSess.ExpiryTimeUnix != sentExpiryTimeUnix || usrSess.SessId != sentSessId {
 			return c.Redirect(http.StatusMovedPermanently, "/login") // TODO : should this redirect to /logout? Check after valiadating everything else
 		}
 

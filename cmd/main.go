@@ -182,7 +182,7 @@ func main() {
 		} else {
 			return c.Redirect(http.StatusMovedPermanently, "/login")
 		}
-	}, sessmngt.SessionMiddleware)
+	})
 
 	// testSession := sessmngt.UserSession{SessId: "12", UserId: 1}
 	// testSession.StoreExpiryTime(5)

@@ -19,5 +19,5 @@ build:
 clean:
 	rm -r -f tmp
 	rm -r -f $(TARGET)
-	rm -f cert.pem
-	rm -f key.pem
+	# rm -f cert.pem
+	# rm -f key.pem

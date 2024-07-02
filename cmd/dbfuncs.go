@@ -48,7 +48,7 @@ func SetupDB(db *sql.DB) {
 	statement.Exec()
 
 	// sessId given as TEXT as a gorilla sessions session id is a string
-	statement, err = db.Prepare("CREATE TABLE IF NOT EXISTS sessions (sessId TEXT PRIMARY KEY, expiryTimeUnix INTEGER NOT NULL, userId INTEGER NOT NULL)")
+	statement, err = db.Prepare("CREATE TABLE IF NOT EXISTS sessions (sessId INTEGER PRIMARY KEY, expiryTimeUnix INTEGER NOT NULL, userId INTEGER NOT NULL)")
 	if err != nil {
 		log.Fatal(err)
 		panic("DB setup failed, table sessions")

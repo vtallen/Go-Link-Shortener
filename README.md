@@ -5,7 +5,7 @@ This project is a simple bitly clone that shortens URLs. The backend is written 
 This is still a WIP, below is my current TODO for the project 
 
 Main Features/Issues to work on:
-* In the login page's "You are already logged in" message, the logout button does not look like a link 
+* Make it so that expired sessions get removed from the databse at some point
 * Server side validation of login sessions
     - Might be vulnerable to sql injection, implement server side validation in all instances where data is taken from a user form and used by the server 
 * Make navbar interactive to show if you are logged in, only display register button if not logged in

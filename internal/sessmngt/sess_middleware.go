@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// TODO : make it so expired sessions get removed from the database, check each time this function is run
 func SessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Get the session
@@ -26,8 +25,7 @@ func SessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		sentExpiryTimeUnixInterface := sess.Values["expiryTimeUnix"]
 		sentSessIdInterface := sess.Values["sessId"]
 		if sentUsrIdInterface == nil || sentExpiryTimeUnixInterface == nil || sentSessIdInterface == nil {
-			// return c.Redirect(http.StatusMovedPermanently, "/logout")
-			return c.String(http.StatusInternalServerError, "values do not exist in cookie")
+			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
 		// // Try to convert the session cookie values to the proper types
@@ -36,21 +34,18 @@ func SessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		sentSessId, okSessId := sentSessIdInterface.(int64)
 		// Type casts return bool not error
 		if !okId || !okTime || !okSessId {
-			return c.String(http.StatusInternalServerError, "unable to convert values")
-			// return c.Redirect(http.StatusMovedPermanently, "/logout")
+			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
 		// // Validate if the session exists in the database,
 		// // has a valid expiry time, user id, and session id
 		usrSess, err := GetSessionStruct(db, sentSessId)
 		if err != nil || usrSess == nil {
-			return c.String(http.StatusInternalServerError, "err in getting session struct "+err.Error())
+			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
 		if usrSess.UserId != sentUsrId || usrSess.ExpiryTimeUnix != sentExpiryTimeUnix || usrSess.SessId != sentSessId {
-			// debug := `sentUsrId = ` + string(sentUsrId) + "\nusrSess.UserId = " + string(usrSess.UserId)
-			return c.String(http.StatusInternalServerError, "values do not match")
-			return c.Redirect(http.StatusMovedPermanently, "/logout") // TODO : should this redirect to /logout? Check after valiadating everything else
+			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
 		// If all of the above goes ok, we can proceeed to the next middleware function

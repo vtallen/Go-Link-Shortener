@@ -126,10 +126,12 @@ func HandleLogout(c echo.Context, config *conf.Config) error {
 		return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error saving session, could not log out"})
 	}
 
+	// return nil
 	// Feels kind of hacky, but I could not find a better/more reliable solution.
 	// Using the HTTP headers lead to some kind of race condition that messed up the session store.
 	// Or I just don't know how to do it properly (the more likely reason)
-	return c.String(200, `<script>window.location.href="/login"</script>`)
+	return c.Redirect(http.StatusFound, "/login")
+	// return c.String(200, `<script>window.location.href="/login"</script>`)
 }
 
 func HandleRegisterPage(c echo.Context, data *pagestructs.RegisterData, config *conf.Config) error {

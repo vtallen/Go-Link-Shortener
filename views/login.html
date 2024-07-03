@@ -14,8 +14,10 @@
   {{ if .AlreadyLoggedIn }}
   <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    <!-- Sends a get request to /logout which returns a script that redirects to the login page -->
-    <p>Already logged in. <a hx-get="/logout">Logout</a></p>
+    <!-- Sends a get request to /logout which destroys any cookie held by the client, 
+    and redirects to the login page. In this instance we target the body so the whole application gets replaced
+    -->
+    <p>Already logged in. <a class="link-primary" href="" hx-get="/logout" hx-target="body">Logout</a></p>
   </div>
 
   {{ else }}

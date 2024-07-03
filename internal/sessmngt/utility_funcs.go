@@ -27,6 +27,9 @@ func GenSessionId() (int64, error) {
 func InvalidateSession(sess *sessions.Session, c echo.Context) error {
 	// Invalidates the session so it gets deleted
 	sess.Options.MaxAge = -1
+	sess.Values["sessId"] = nil
+	sess.Values["expiryTimeUnix"] = nil
+	sess.Values["userId"] = nil
 
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		return err

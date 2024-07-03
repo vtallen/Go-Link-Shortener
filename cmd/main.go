@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"html/template"
 	"io"
-	"net/http"
 	"strconv"
 
 	"github.com/gorilla/sessions"
@@ -81,7 +81,9 @@ func main() {
 	// fmt.Println("inserted a link | id: %d | shortcode: %s | url: %s\n", id, shortcode, url)
 
 	// PrintLinksTable(db)
-	// PrintUsersTable(db)
+	fmt.Println("USERS TABLE:\n")
+	PrintUsersTable(db)
+	fmt.Println("SESSION TABLE:\n")
 	sessmngt.PrintSessionTable(db)
 
 	// Setup middleware
@@ -178,12 +180,12 @@ func main() {
 		// }
 		// // TODO - actually validate sessions
 		// if sess.Values["userId"] != nil {
-		return c.String(http.StatusOK, "test")
+		// return c.String(http.StatusOK, "test")
 		return HandleUserPage(c, db, &userPageData, config)
 		// } else {
 		// 	return c.Redirect(http.StatusMovedPermanently, "/login")
 		// }
-	})
+	}, sessmngt.SessionMiddleware)
 
 	// testSession := sessmngt.UserSession{SessId: "12", UserId: 1}
 	// testSession.StoreExpiryTime(5)

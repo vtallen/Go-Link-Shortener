@@ -73,9 +73,9 @@ func (usr *UserSession) DeleteDB(db *sql.DB) error {
 * Session functions
 =======================================================
 */
-func GetSessionStruct(db *sql.DB, sessId string) (*UserSession, error) {
+func GetSessionStruct(db *sql.DB, sessId int64) (*UserSession, error) {
 	var session *UserSession = &UserSession{}
-	err := db.QueryRow("SELECT sessID, expiryTimeUnix, userId FROM sessions WHERE id = ?").Scan(&session.SessId, &session.ExpiryTimeUnix, &session.UserId)
+	err := db.QueryRow("SELECT sessID, expiryTimeUnix, userId FROM sessions WHERE sessID = ?", sessId).Scan(&session.SessId, &session.ExpiryTimeUnix, &session.UserId)
 	if err != nil {
 		return nil, err
 	}

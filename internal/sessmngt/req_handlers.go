@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4" //lint:ignore
 	"github.com/vtallen/go-link-shortener/internal/conf"
 	"github.com/vtallen/go-link-shortener/internal/pagestructs"
 )
@@ -48,7 +48,15 @@ func HandleLoginSession(c echo.Context, data *pagestructs.LoginData, config *con
 	email := c.FormValue("email")
 	password := c.FormValue("password")
 
-	_, err := mail.ParseAddress(email)
+	err := CheckCaptcha(c, config.HCaptcha.SecretKey)
+	if err != nil {
+		data.HasError = true
+		data.LoginForm.Email = email
+		data.ErrorText = "Please answer the captcha"
+		return c.Render(200, "login-form", data)
+	}
+
+	_, err = mail.ParseAddress(email)
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Invalid email"
@@ -198,6 +206,10 @@ func HandleRegisterPage(c echo.Context, data *pagestructs.RegisterData, config *
 func HandleRegisterSession(c echo.Context, data *pagestructs.RegisterData, config *conf.Config) error {
 	db := c.Get("db").(*sql.DB)
 
+	email := c.FormValue("email")
+	password := c.FormValue("password")
+
+	// Check if a user is already logged in, if so they will be shown a logout button
 	sess, err := session.Get("session", c)
 	if err != nil {
 		data.HasError = true
@@ -209,8 +221,20 @@ func HandleRegisterSession(c echo.Context, data *pagestructs.RegisterData, confi
 		return c.Render(200, "register-form", data)
 	}
 
-	email := c.FormValue("email")
-	password := c.FormValue("password")
+	// // Validate the hCaptcha element to prevent spam
+	// captchaResponse := c.FormValue("h-captcha-response")
+
+	// hc := hcaptcha.New(config.HCaptcha.SecretKey) //lint:ignore
+	// ip, _, err := net.SplitHostPort(c.Request().RemoteAddr)
+
+	// resp, err := hc.Verify(captchaResponse, ip)
+	err = CheckCaptcha(c, config.HCaptcha.SecretKey)
+	if err != nil {
+		data.HasError = true
+		data.RegisterForm.Email = email
+		data.ErrorText = "Please answer the captcha"
+		return c.Render(200, "register-form", data)
+	}
 
 	// validate email format
 	_, err = mail.ParseAddress(email)

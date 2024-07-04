@@ -25,6 +25,7 @@ type Config struct {
 	Auth       Auth
 	Server     Server
 	Database   Database
+	HCaptcha   HCaptcha
 }
 
 type Auth struct {
@@ -35,6 +36,11 @@ type Auth struct {
 	TLSKey           string `yaml:"tls_key"`
 	CookieMaxAgeDays int    `yaml:"cookie_max_age_days"`
 	CookieSecret     string `yaml:"cookie_secret"`
+}
+
+type HCaptcha struct {
+	SecretKey string `yaml:"secret_key"`
+	SiteKey   string `yaml:"site_key"`
 }
 
 type Server struct {

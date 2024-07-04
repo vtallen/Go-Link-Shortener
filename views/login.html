@@ -1,4 +1,16 @@
 {{ block "login-form" .}}
+<!-- This script ensures that the hcaptcha gets re-rendered when an error message is sent down and registration fails -->
+<script>
+  document.addEventListener("htmx:afterSwap", function (event) {
+    if (event.detail.target.id === "login-form") {
+      hcaptcha.render(document.querySelector('.h-captcha'), {
+        sitekey: '{{ .HCaptchaSiteKey }}'
+      });
+    }
+  });
+</script>
+
+
 <form id="login-form" hx-post="/login" hx-trigger="submit" hx-target="#login-form" hx-swap="innerHTML">
   <div class="input-group mb-3">
     <input name="email" type="text" class="form-control" placeholder="Email" {{ if .LoginForm.Email }}
@@ -7,9 +19,13 @@
   <div class="input-group mb-3">
     <input name="password" type="password" class="form-control" placeholder="Password" required>
   </div>
-  <div class="input-group mb-3">
+
+  {{ template "h-captcha" . }}
+
+  <div class="d-grid">
     <button type="submit" class="btn btn-primary input-group-append">Login</button>
   </div>
+
   {{ if .HasError }}
   {{ if .IsLoggedIn }}
   <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -53,6 +69,18 @@
 {{ end }}
 
 {{ block "register-form" . }}
+<!-- This script ensures that the hcaptcha gets re-rendered when an error message is sent down and registration fails -->
+<script>
+  document.addEventListener("htmx:afterSwap", function (event) {
+    if (event.detail.target.id === "register-form") {
+      hcaptcha.render(document.querySelector('.h-captcha'), {
+        sitekey: '{{ .HCaptchaSiteKey }}'
+      });
+    }
+  });
+</script>
+
+<!-- Make sure the user is logged out before they can create an account -->
 {{ if .IsLoggedIn }}
 <div id="errors" class="alert alert-danger fade show" role="alert">
   <!-- Sends a get request to /logout which destroys any cookie held by the client, 
@@ -61,22 +89,26 @@
   <p>Already logged in. <a class="link-primary" href="" hx-get="/logout" hx-target="body">Logout?</a></p>
 </div>
 {{else}}
-<div id="registerForm">
-  <form hx-post="/register" hx-trigger="submit" hx-target="#registerForm" hx-swap="outerHTML">
+<div id="register-form">
+  <form hx-post="/register" hx-trigger="submit" hx-target="#register-form" hx-swap="outerHTML">
     <div class="input-group mb-3">
-      <input name="Email" type="text" class="form-control" placeholder="email" required>
+      <input name="email" type="text" class="form-control" placeholder="Email" required>
     </div>
     <div class="input-group mb-3">
       <input name="password" type="password" class="form-control" placeholder="Password" required>
     </div>
-    <div class="input-group mb-3">
+
+    {{ template "h-captcha" . }}
+
+    <div class="d-grid">
       <button type="submit" class="btn btn-primary input-group-append">Register</button>
     </div>
+
 
     {{ if .HasError }}
     <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      <p>Error: {{ .ErrorText }}, please try again</p>
+      <p> {{ .ErrorText }} </p>
     </div>
     {{ end }}
 

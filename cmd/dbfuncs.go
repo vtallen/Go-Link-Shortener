@@ -8,8 +8,9 @@ import (
 	"log"
 	"math/rand"
 
+	"github.com/labstack/echo/v4"
+	"github.com/vtallen/go-link-shortener/internal/sessmngt"
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Link struct {
@@ -23,151 +24,7 @@ type APIKey struct {
 	user string
 }
 
-type UserLogin struct {
-	Id          int
-	Email       string
-	Username    string
-	Password    string
-	Permissions string
-}
-
-/*
-* Function: HashPassword
-*
-* Parameters: password string - The password to hash
-*
-* Description: This function takes a password string and hashes it using bcrypt.
-* The hashed password is then stored in the User struct.
-*
-* Returns: error - If there is an error hashing the password, the error is returned.
- */
-func (u *UserLogin) HashPassword(password string) error {
-	// hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// u.Password = string(hashedPassword)
-	// return nil
-	hashedPassword, err := HashPassword(password)
-	if err != nil {
-		return err
-	}
-
-	u.Password = hashedPassword
-	return nil
-}
-
-func HashPassword(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-
-	return string(hashedPassword), nil
-}
-
-/*
-* Function: CheckPassword
-*
-* Parameters: password string - The password to check if the hash matches
-*
-* Description: This function takes a password string and compares it to the hashed
-* password stored in the User struct. If the passwords match, the function returns
-* nil. If the passwords do not match, the function returns an error.
-*
-* Returns: error - If the passwords do not match, the error is returned.
- */
-func (u *UserLogin) CheckPassword(password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
-}
-
-/*
-* Function: AddUser
-*
-* Parameters: db *sql.DB - The database to add the user to
-*             email string - The email of the user to add
-*             username string - The username of the user to add
-*             password string - The password of the user to add
-*             permissions string - The access level of the user to add
-*
-* Description: This function adds a user to the database with the specified email, username,
- */
-func AddUser(db *sql.DB, email string, username string, password string, permissions string) error {
-	insert, err := db.Prepare("INSERT INTO users (email, username, password, permissions) VALUES (?, ?, ?, ?)")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = insert.Exec(email, username, password, permissions)
-	if err != nil {
-		log.Fatal(err.Error())
-		return err
-	}
-
-	return nil
-}
-
-/*
-* Name: RemoveUser
-*
-* Parameters: db *sql.DB - The database to remove the user from
-*             email string - The email of the user to remove
-*
-* Description: This function removes a user from the database with the specified email.
-*
- */
-func RemoveUser(db *sql.DB, email string) error {
-	_, err := db.Exec("DELETE FROM users WHERE email = ?", email)
-	return err
-}
-
-/*
-* Name: GetUserByEmail
-*
-* Parameters: db *sql.DB - The database to get the user from
-*             email string - The email of the user to get
-*
-* Description: This function retrieves a user from the database with the specified email.
-*
-* Returns: *User - If the user is found, the user is returned. If the user is not found, nil is returned.
-*          error - If there is an error retrieving the user, the error is returned.
- */
-func GetUserByEmail(db *sql.DB, email string) (*UserLogin, error) {
-	var user UserLogin = UserLogin{}
-
-	err := db.QueryRow("SELECT id, email, username, password, permissions FROM users WHERE email = ?", email).Scan(&user.Id, &user.Email, &user.Username, &user.Password, &user.Permissions)
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
-}
-
-func GetUser(db *sql.DB, id int) (*UserLogin, error) {
-	var user UserLogin
-
-	err := db.QueryRow("SELECT email, username, password, permissions FROM users WHERE id = ?", id).Scan(&user.Email, &user.Username, &user.Password, &user.Permissions)
-	if err != nil {
-		return nil, err
-	}
-
-	user.Id = id
-	return &user, nil
-}
-
-func GetUserId(db *sql.DB, email string) (int, error) {
-	var id int
-	err := db.QueryRow("SELECT id FROM users WHERE email = ?", email).Scan(&id)
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
-}
-
 func SetupDB(db *sql.DB) {
-	fmt.Println("\n\nSetting up database\n\n")
 	// Create the links table if it doesn't exist
 	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY, shortcode TEXT, url TEXT)")
 	if err != nil {
@@ -189,12 +46,29 @@ func SetupDB(db *sql.DB) {
 		panic("DB setup failed, table users")
 	}
 	statement.Exec()
+
+	// sessId given as TEXT as a gorilla sessions session id is a string
+	statement, err = db.Prepare("CREATE TABLE IF NOT EXISTS sessions (sessId INTEGER PRIMARY KEY, expiryTimeUnix INTEGER NOT NULL, userId INTEGER NOT NULL)")
+	if err != nil {
+		log.Fatal(err)
+		panic("DB setup failed, table sessions")
+	}
+	statement.Exec()
+}
+
+func dbMiddleware(db *sql.DB) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("db", db)
+			return next(c)
+		}
+	}
 }
 
 func GenUniqueID(db *sql.DB, universe string, maxchars int) (int, error) {
 	maxiters := 10000
 	idx := 0
-	for true {
+	for {
 		if idx > maxiters {
 			return 0, errors.New("genUniqueID timeout reached, no unique id found")
 		}
@@ -208,7 +82,7 @@ func GenUniqueID(db *sql.DB, universe string, maxchars int) (int, error) {
 		}
 	}
 
-	return 0, errors.New("genUniqueID this should not be possible to reach")
+	// return 0, errors.New("genUniqueID this should not be possible to reach")
 }
 
 func GenShortcode(universe string, maxchars int) (string, int) {
@@ -245,15 +119,15 @@ func DeleteLink(db *sql.DB, id int) error {
 	return err
 }
 
-func GetAllUsers(db *sql.DB) []UserLogin {
+func GetAllUsers(db *sql.DB) []sessmngt.UserLogin {
 	rows, err := db.Query("SELECT email, username, password, permissions FROM users")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	var users []UserLogin
+	var users []sessmngt.UserLogin
 	for rows.Next() {
-		var user UserLogin
+		var user sessmngt.UserLogin
 		if err := rows.Scan(&user.Email, &user.Username, &user.Password, &user.Permissions); err != nil {
 			log.Fatal(err.Error())
 		}
@@ -311,7 +185,7 @@ func PrintLinksTable(db *sql.DB) {
 }
 
 func PrintUsersTable(db *sql.DB) {
-	var users []UserLogin = GetAllUsers(db)
+	var users []sessmngt.UserLogin = GetAllUsers(db)
 
 	for idx := 0; idx < len(users); idx++ {
 		fmt.Printf("email: %s | username: %s | password: %s | permissions: %s\n", users[idx].Email, users[idx].Username, users[idx].Password, users[idx].Permissions)

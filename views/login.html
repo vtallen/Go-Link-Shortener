@@ -11,10 +11,13 @@
     <button type="submit" class="btn btn-primary input-group-append">Login</button>
   </div>
   {{ if .HasError }}
-  {{ if .AlreadyLoggedIn }}
+  {{ if .IsLoggedIn }}
   <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    <p>Already logged in. <a target="_self" href="/logout">Logout?</a></p>
+    <!-- Sends a get request to /logout which destroys any cookie held by the client, 
+    and redirects to the login page. In this instance we target the body so the whole application gets replaced
+    -->
+    <p>Already logged in. <a class="link-primary" href="" hx-get="/logout" hx-target="body">Logout</a></p>
   </div>
 
   {{ else }}
@@ -50,10 +53,18 @@
 {{ end }}
 
 {{ block "register-form" . }}
+{{ if .IsLoggedIn }}
+<div id="errors" class="alert alert-danger fade show" role="alert">
+  <!-- Sends a get request to /logout which destroys any cookie held by the client, 
+    and redirects to the login page. In this instance we target the body so the whole application gets replaced
+    -->
+  <p>Already logged in. <a class="link-primary" href="" hx-get="/logout" hx-target="body">Logout?</a></p>
+</div>
+{{else}}
 <div id="registerForm">
   <form hx-post="/register" hx-trigger="submit" hx-target="#registerForm" hx-swap="outerHTML">
     <div class="input-group mb-3">
-      <input name="email" type="text" class="form-control" placeholder="email" required>
+      <input name="Email" type="text" class="form-control" placeholder="email" required>
     </div>
     <div class="input-group mb-3">
       <input name="password" type="password" class="form-control" placeholder="Password" required>
@@ -75,10 +86,12 @@
       <p>Account created! <a target="_self" href="/login">Login</a></p>
     </div>
     {{ end }}
+
   </form>
 
   <p class="text-center">Already have an account? <a href="/login">Login here</a></p>
 </div>
+{{ end }}
 {{ end }}
 
 {{ block "register" . }}

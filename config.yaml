@@ -2,6 +2,9 @@ server:
   port: 8080 
   host: "localhost"
 
+database:
+  path: ./shortener.db # Location where the database file will be stored  
+
 shortcodes:
   shortcode_universe: "abcdefghijklmnopqrstuvwxyz" # Characters allowed for use in shortcodes
   shortcode_length: 6 # Length of shortcodes in characters

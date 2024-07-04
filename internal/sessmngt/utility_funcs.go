@@ -2,11 +2,14 @@ package sessmngt
 
 import (
 	"crypto/rand"
+	"errors"
 	"math"
 	"math/big"
+	"net"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
+	"github.com/meyskens/go-hcaptcha"
 	"github.com/vtallen/go-link-shortener/internal/conf"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,6 +36,42 @@ func GenSessionId() (int64, error) {
 	}
 
 	return randomNumber.Int64(), nil
+}
+
+/*
+* Function: CheckCaptcha
+*
+* Parameters: c echo.Context - The context of the current request
+*
+* Returns:  error - returns nil if the captcha was verified
+*
+* Description: Validates that the captcha from a page that has one has been
+*              successfully filled out
+*
+ */
+func CheckCaptcha(c echo.Context, secretkey string) error {
+	captchaResponse := c.FormValue("h-captcha-response")
+
+	// Create a captcha object
+	hc := hcaptcha.New(secretkey) //lint:ignore
+
+	// Get the remote address of the request
+	ip, _, err := net.SplitHostPort(c.Request().RemoteAddr)
+	if err != nil {
+		return err
+	}
+
+	// Verify the captcha response with hCaptcha's servers
+	resp, err := hc.Verify(captchaResponse, ip)
+	if err != nil {
+		return err
+	}
+
+	if !resp.Success {
+		return errors.New("captcha failed")
+	}
+
+	return nil
 }
 
 /*

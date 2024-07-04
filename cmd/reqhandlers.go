@@ -27,7 +27,7 @@ func HandleRedirect(c echo.Context, db *sql.DB, config *conf.Config) error {
 	return c.Redirect(302, link.Url) // If a url exists, redirect the user to it
 }
 
-func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *IndexData) error {
+func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *pagestructs.IndexData) error {
 	URL := c.FormValue("url")
 	if URL != "" {
 		// Validate the URL
@@ -66,6 +66,6 @@ func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *IndexD
 	return c.Render(200, "shortcode-form", data)
 }
 
-func HandleUserPage(c echo.Context, db *sql.DB, data *UserPageData, config *conf.Config) error {
+func HandleUserPage(c echo.Context, db *sql.DB, data *pagestructs.UserPageData, config *conf.Config) error {
 	return c.Render(200, "user-homepage", data)
 }

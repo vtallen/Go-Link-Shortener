@@ -32,24 +32,6 @@ func newTemplate() *Templates {
 	}
 }
 
-/*
-* Name: IndexData
-*
-* Description: This struct is used to pass data to the index page.
- */
-type IndexData struct {
-	ShortcodeForm ShortcodeForm
-	Server        *conf.Server
-}
-
-type UserPageData struct{}
-
-type ShortcodeForm struct {
-	URL      string
-	Result   string
-	HasError bool
-}
-
 func main() {
 	config, err := conf.LoadConfig("config.yaml")
 	if err != nil {
@@ -85,7 +67,9 @@ func main() {
 	PrintUsersTable(db)
 	fmt.Println("SESSION TABLE:\n")
 	sessmngt.PrintSessionTable(db)
-
+	fmt.Println(config.HCaptcha.SecretKey)
+	fmt.Println(config.HCaptcha.SiteKey)
+	fmt.Println("=========================")
 	// Setup middleware
 	e.Use(middleware.Logger())
 	e.Use(dbMiddleware(db)) // Injects the database variable into the request context
@@ -101,7 +85,7 @@ func main() {
 	e.Renderer = newTemplate() // Load the templates
 
 	// Setup data structs for the different pages
-	indexData := IndexData{}
+	indexData := pagestructs.IndexData{}
 	indexData.Server = &config.Server
 	errorPageData := pagestructs.ErrorPageData{ErrorText: "No error"}
 
@@ -110,6 +94,7 @@ func main() {
 		indexData.ShortcodeForm.URL = ""
 		indexData.ShortcodeForm.Result = ""
 		indexData.ShortcodeForm.HasError = false
+		indexData.HCaptchaSiteKey = config.HCaptcha.SiteKey
 
 		// testdb := c.Get("db").(*sql.DB)
 		// var email string
@@ -143,6 +128,7 @@ func main() {
 		loginData.HasError = false
 		loginData.ErrorText = ""
 		loginData.LoginForm.Email = ""
+		loginData.HCaptchaSiteKey = config.HCaptcha.SiteKey
 
 		return sessmngt.HandleLoginPage(c, &loginData, config)
 	})
@@ -163,6 +149,8 @@ func main() {
 		registerData.HasError = false
 		registerData.ErrorText = ""
 		registerData.IsLoggedIn = false
+		registerData.Success = false
+		registerData.HCaptchaSiteKey = config.HCaptcha.SiteKey
 
 		return sessmngt.HandleRegisterPage(c, &registerData, config)
 	})
@@ -173,7 +161,7 @@ func main() {
 	})
 
 	// Endpoint for the user dashboard
-	userPageData := UserPageData{}
+	userPageData := pagestructs.UserPageData{}
 	e.GET("/user", func(c echo.Context) error {
 		return HandleUserPage(c, db, &userPageData, config)
 	}, sessmngt.SessionMiddleware)
@@ -188,6 +176,7 @@ func main() {
 	// 		break
 	// 	}
 	// }
+	e.Logger.Info(config.HCaptcha.SiteKey)
 
 	e.Logger.Fatal(e.StartTLS(":"+strconv.Itoa(config.Server.Port), config.Auth.TLSCert, config.Auth.TLSKey)) // Run the server
 }

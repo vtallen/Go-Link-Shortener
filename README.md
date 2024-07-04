@@ -5,7 +5,6 @@ This project is a simple bitly clone that shortens URLs. The backend is written 
 This is still a WIP, below is my current TODO for the project 
 
 Main Features/Issues to work on:
-* Implement hCaptcha on create link, register, and login
 * Make it so that expired sessions get removed from the databse at some point
 * Make navbar interactive to show if you are logged in, only display register button if not logged in
 * Link statistics for signed in users (Will need to figure out how to store on the backend)
@@ -19,8 +18,6 @@ Main Features/Issues to work on:
 Small fixes:
 * standardize order of handler func parameters
 * Modify UserLogin in cmd/ to use the pattern used in internal/sessmngt/database_funcs for UserSession
-* hCaptcha on register page
-* Make an error template on each page so that error messages can be streamlined
 * Ability for admin to not allow creation of links unless user is signed in
 * Make logging work to a file, and errors be more descriptive for where they happened
 * Add option for auto TLS, needs work on config for all fields

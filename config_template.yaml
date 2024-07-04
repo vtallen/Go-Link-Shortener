@@ -17,3 +17,7 @@ auth:
   cookie_max_age_days: 7 # Cookie max age in days 
   api_key_length: 32 # Length of API key in characters
   cookie_secret: "secret"
+
+hcaptcha:
+  secret_key: "abcd"
+  site_key: "abcde"

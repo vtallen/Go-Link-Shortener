@@ -4,7 +4,6 @@
 package codegen
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 )
@@ -16,7 +15,6 @@ func GenRandID(universe string, maxchars int) int {
 	}
 	max_index := UniverseToBaseTen(max_result, universe)
 
-	fmt.Println("\n\n\n" + string(max_index))
 	result := rand.Intn(max_index)
 
 	return result

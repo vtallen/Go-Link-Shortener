@@ -10,10 +10,10 @@ type ErrorPageData struct {
 * Description: This struct is used to pass data to the login page.
  */
 type LoginData struct {
-	LoginForm       LoginForm
-	HasError        bool
-	ErrorText       string
-	AlreadyLoggedIn bool
+	LoginForm  LoginForm
+	HasError   bool
+	ErrorText  string
+	IsLoggedIn bool
 }
 
 type LoginForm struct {
@@ -26,6 +26,7 @@ type RegisterData struct {
 	HasError     bool
 	ErrorText    string
 	Success      bool
+	IsLoggedIn   bool
 }
 
 type RegisterForm struct {

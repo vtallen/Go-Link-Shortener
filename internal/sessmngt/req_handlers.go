@@ -13,15 +13,47 @@ import (
 	"github.com/vtallen/go-link-shortener/internal/pagestructs"
 )
 
+/*
+* Function:
+*
+* Parameters: c echo.Context - The context for the current request
+*             data *pagestructs.LoginData - The needed paged data for the template/functionality
+*             config *conf.Config - The configuration struct for the server
+*
+* Returns: error
+*
+* Description: Handles serving the login page found in views/login.html from a GET request
+*
+ */
 func HandleLoginPage(c echo.Context, data *pagestructs.LoginData, config *conf.Config) error {
 	return c.Render(200, "login", data)
 }
 
-func HandleLoginSession(c echo.Context, db *sql.DB, data *pagestructs.LoginData, config *conf.Config) error {
+/*
+* Function:
+*
+* Parameters: c echo.Context - The context for the current request
+*             data *pagestructs.LoginData - The needed paged data for the template/functionality
+*             config *conf.Config - The configuration struct for the server
+*
+* Returns: error
+*
+* Description: Handles a POST request made to /login to create the session cookie and redirect the user to the
+*              user homepage
+*
+ */
+func HandleLoginSession(c echo.Context, data *pagestructs.LoginData, config *conf.Config) error {
+	db := c.Get("db").(*sql.DB)
+
 	email := c.FormValue("email")
 	password := c.FormValue("password")
 
-	// TODO: validate email is in correct format, prevent sql injection. mail.ParseAddress I think?
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Invalid email"
+		return c.Render(200, "login-form", data)
+	}
 
 	// Check if the user exists
 	user, err := GetUserByEmail(db, email)
@@ -56,20 +88,11 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *pagestructs.LoginData,
 	// Validate that user is not logged in already
 	if sess.Values["userId"] != nil {
 		data.HasError = true
-		data.AlreadyLoggedIn = true
+		data.IsLoggedIn = true
 		data.ErrorText = "User already logged in"
 		c.Logger().Info("User already logged in, email: " + email)
 		return c.Render(200, "login-form", data)
 	}
-
-	// create a user session in the database
-
-	// sess.Options = &sessions.Options{
-	// 	MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
-	// 	HttpOnly: true,
-	// }
-
-	// sess.Values["userId"] = user.Id
 
 	userSession, err := SetSessionCookie(sess, user, config)
 	if err != nil {
@@ -89,9 +112,6 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *pagestructs.LoginData,
 		return c.Render(200, "login-form", data)
 	}
 
-	// print("\n\n\n" + err.Error() + "\n\n\n")
-	// store the session in the database
-
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		data.HasError = true
 		data.ErrorText = "Error saving session 3"
@@ -104,9 +124,20 @@ func HandleLoginSession(c echo.Context, db *sql.DB, data *pagestructs.LoginData,
 
 	c.Response().Header().Set("HX-Redirect", "/user")
 	return c.String(http.StatusMovedPermanently, "redirecting")
-	// c.Response().Header().Set("HX-Push-URL", "/user")
-	// return c.Redirect(http.StatusMovedPermanently, "/user")
 }
+
+/*
+* Function:
+*
+* Parameters: c echo.Context - The context for the current request
+*             config *conf.Config - The configuration struct for the server
+*
+* Returns: error
+*
+* Description: Handles a GET request made to the /logout endpoint. It invalidates
+*              the session cookie if it exists then redirects the user to the /login endpoint
+*
+ */
 
 func HandleLogout(c echo.Context, config *conf.Config) error {
 	sess, err := session.Get("session", c)
@@ -114,36 +145,75 @@ func HandleLogout(c echo.Context, config *conf.Config) error {
 		return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error getting session, could not log out"})
 	}
 
-	// sess.Values["userId"] = nil
-	// sess.Values["expiryTimeUnix"] = nil
-
-	// if err := sess.Save(c.Request(), c.Response()); err != nil {
-	// 	return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error saving session, could not log out"})
-	// }
-
 	err = InvalidateSession(sess, c)
 	if err != nil {
 		return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error saving session, could not log out"})
 	}
 
-	// return nil
-	// Feels kind of hacky, but I could not find a better/more reliable solution.
-	// Using the HTTP headers lead to some kind of race condition that messed up the session store.
-	// Or I just don't know how to do it properly (the more likely reason)
 	return c.Redirect(http.StatusFound, "/login")
-	// return c.String(200, `<script>window.location.href="/login"</script>`)
 }
 
+/*
+* Function: HandleRegisterPage
+*
+* Parameters: c echo.Context - The context for the current request
+*             data *pagestructs.RegisterData - The needed paged data for the template/functionality
+*             config *conf.Config - The configuration struct for the server
+*
+* Returns: error
+*
+* Description: Handles serving the register page html on endpoint /register
+*
+ */
+
 func HandleRegisterPage(c echo.Context, data *pagestructs.RegisterData, config *conf.Config) error {
+	sess, err := session.Get("session", c)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Could not get the session"
+		return c.Render(200, "register", data)
+	}
+	// This statement ensures that a user can only make an account if they are logged out
+	if CookieExists(sess) {
+		data.IsLoggedIn = true
+		return c.Render(200, "register", data)
+	}
+
 	return c.Render(200, "register", data)
 }
 
-func HandleRegisterSession(c echo.Context, db *sql.DB, data *pagestructs.RegisterData, config *conf.Config) error {
+/*
+* Function:
+*
+* Parameters: c echo.Context - The context for the current request
+*             data *pagestructs.RegisterData - The needed paged data for the template/functionality
+*             config *conf.Config - The configuration struct for the server
+*
+* Returns: error
+*
+* Description: Handles a POST request made to the /register endpoint from the register form
+*
+ */
+
+func HandleRegisterSession(c echo.Context, data *pagestructs.RegisterData, config *conf.Config) error {
+	db := c.Get("db").(*sql.DB)
+
+	sess, err := session.Get("session", c)
+	if err != nil {
+		data.HasError = true
+		data.ErrorText = "Could not get the session"
+		return c.Render(200, "register-form", data)
+	}
+	if CookieExists(sess) {
+		data.IsLoggedIn = true
+		return c.Render(200, "register-form", data)
+	}
+
 	email := c.FormValue("email")
 	password := c.FormValue("password")
 
 	// validate email format
-	_, err := mail.ParseAddress(email)
+	_, err = mail.ParseAddress(email)
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Invalid email"
@@ -188,37 +258,6 @@ func HandleRegisterSession(c echo.Context, db *sql.DB, data *pagestructs.Registe
 	}
 
 	c.Logger().Info("Added user " + email + " to the database")
-
-	// create the session
-	// sess, err := session.Get("session", c)
-	// if err != nil {
-	// 	data.HasError = true
-	// 	data.ErrorText = "Error creating session"
-	// 	c.Logger().Warn("Error creating session: " + err.Error() + " | email: " + email)
-	// 	return c.Render(200, "register-form", data)
-	// }
-
-	// id, err := GetUserId(db, email)
-	// if err != nil {
-	// 	data.HasError = true
-	// 	data.ErrorText = "Error creating session"
-	// 	c.Logger().Info("Error getting user id while creating session: " + err.Error() + " | email: " + email)
-	// 	return c.Render(200, "register-form", data)
-	// }
-
-	// sess.Values["userId"] = id
-
-	// sess.Options = &sessions.Options{
-	// 	MaxAge:   86400 * config.Auth.CookieMaxAgeDays,
-	// 	HttpOnly: true,
-	// }
-
-	// if err := sess.Save(c.Request(), c.Response()); err != nil {
-	// 	data.HasError = true
-	// 	data.ErrorText = "Error creating session"
-	// 	c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
-	// 	return err
-	// }
 
 	data.HasError = false
 	data.Success = true

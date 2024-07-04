@@ -149,7 +149,7 @@ func main() {
 
 	// Endpoint that handles the submission of the login form on /login
 	e.POST("/login", func(c echo.Context) error {
-		return sessmngt.HandleLoginSession(c, db, &loginData, config)
+		return sessmngt.HandleLoginSession(c, &loginData, config)
 	})
 
 	// Endpoint that logs the user out and redirects them to the login page
@@ -160,31 +160,22 @@ func main() {
 	// Endpoint that serves the register page
 	registerData := pagestructs.RegisterData{}
 	e.GET("/register", func(c echo.Context) error {
-		loginData.HasError = false
-		loginData.ErrorText = ""
+		registerData.HasError = false
+		registerData.ErrorText = ""
+		registerData.IsLoggedIn = false
+
 		return sessmngt.HandleRegisterPage(c, &registerData, config)
 	})
 
 	// Endpoint that handles the submission of the register form on /register
 	e.POST("/register", func(c echo.Context) error {
-		return sessmngt.HandleRegisterSession(c, db, &registerData, config)
+		return sessmngt.HandleRegisterSession(c, &registerData, config)
 	})
 
 	// Endpoint for the user dashboard
 	userPageData := UserPageData{}
 	e.GET("/user", func(c echo.Context) error {
-		// sess, err := session.Get("session", c)
-		// if err != nil {
-		// 	errorPageData.ErrorText = "Error getting session"
-		// 	return c.Render(302, "/error", errorPageData)
-		// }
-		// // TODO - actually validate sessions
-		// if sess.Values["userId"] != nil {
-		// return c.String(http.StatusOK, "test")
 		return HandleUserPage(c, db, &userPageData, config)
-		// } else {
-		// 	return c.Redirect(http.StatusMovedPermanently, "/login")
-		// }
 	}, sessmngt.SessionMiddleware)
 
 	// testSession := sessmngt.UserSession{SessId: "12", UserId: 1}

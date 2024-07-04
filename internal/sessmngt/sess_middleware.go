@@ -8,6 +8,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+/*
+* Function: SessionMiddleware
+*
+* Parameters: next echo.HandlerFunc - The next middleware function to call in the chain of registered functions
+*
+* Returns: echo.HandlerFunc - The closure function that validates user sessions
+*
+* Description: A middleware function that can be applied to routes that will ensure that
+*              a session cookie exists and all data within it matches what is stored in the
+*              database. Failed authentication will lead to the user being sent to the /logout
+*              endpoint which invalidates their session cookie and sends them to the /login endpoint
+*
+ */
 func SessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Get the session

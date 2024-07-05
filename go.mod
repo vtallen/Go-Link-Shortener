@@ -1,4 +1,4 @@
-module github.com/vtallen/go-link-shortener
+module github.com/vtallen/go-link-shortener 
 
 go 1.22.4
 

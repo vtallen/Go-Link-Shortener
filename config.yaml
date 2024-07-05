@@ -1,0 +1,23 @@
+server:
+  port: 8080 
+  host: "localhost"
+
+database:
+  path: ./shortener.db # Location where the database file will be stored  
+
+shortcodes:
+  shortcode_universe: "abcdefghijklmnopqrstuvwxyz" # Characters allowed for use in shortcodes
+  shortcode_length: 6 # Length of shortcodes in characters
+
+auth:
+  root_username: "root" # Site admin user username
+  root_password: "root" # Site admin user password
+  tls_cert: "cert.pem" # Path to TLS certificate
+  tls_key: "key.pem" # Path to TLS key
+  cookie_max_age_days: 7 # Cookie max age in days 
+  api_key_length: 32 # Length of API key in characters
+  cookie_secret: "secret"
+
+hcaptcha:
+  secret_key: "abcd"
+  site_key: "abcde"

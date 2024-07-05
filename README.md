@@ -5,6 +5,8 @@ This project is a simple bitly clone that shortens URLs. The backend is written 
 This is still a WIP, below is my current TODO for the project 
 
 Main Features/Issues to work on:
+* Add captcha to the url shortener form
+* A function to validate a signed in user on a non-protected route so that signed in users don't get shown a captcha for the url shortener 
 * Make it so that expired sessions get removed from the databse at some point
 * Make navbar interactive to show if you are logged in, only display register button if not logged in
 * Link statistics for signed in users (Will need to figure out how to store on the backend)

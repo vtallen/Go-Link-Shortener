@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 
 	"github.com/labstack/echo/v4"
 	"github.com/vtallen/go-link-shortener/internal/conf"
 	"github.com/vtallen/go-link-shortener/internal/pagestructs"
+	"github.com/vtallen/go-link-shortener/internal/sessmngt"
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
 )
 
@@ -21,21 +23,32 @@ func HandleRedirect(c echo.Context, db *sql.DB, config *conf.Config) error {
 	link, err := GetLink(db, id)
 	if err != nil {
 		errData := pagestructs.ErrorPageData{ErrorText: "404, link does not exist"}
-		return c.Render(404, "error-page", errData) // Show the not found page if link does not exist
+		return c.Render(http.StatusNotFound, "error-page", errData) // Show the not found page if link does not exist
 	}
 
-	return c.Redirect(302, link.Url) // If a url exists, redirect the user to it
+	return c.Redirect(http.StatusMovedPermanently, link.Url) // If a url exists, redirect the user to it
 }
 
 func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *pagestructs.IndexData) error {
 	URL := c.FormValue("url")
 	if URL != "" {
+		// Check the captcha if the user is not logged in
+		if !data.IsLoggedIn {
+			err := sessmngt.CheckCaptcha(c, config.HCaptcha.SecretKey)
+			if err != nil {
+				data.ShortcodeForm.HasError = true
+				data.ShortcodeForm.ErrorText = "Please answer the captcha"
+				return c.Render(http.StatusOK, "shortcode-form", data)
+			}
+		}
+
 		// Validate the URL
 		_, err := url.Parse(URL)
 		if err != nil {
 			data.ShortcodeForm.URL = URL
 			data.ShortcodeForm.HasError = true
-			return c.Render(200, "shortcode-form", data)
+			data.ShortcodeForm.ErrorText = "There was an error submitting the URL, please try again"
+			return c.Render(http.StatusOK, "shortcode-form", data)
 		}
 
 		// Generate a random id for the table
@@ -46,7 +59,7 @@ func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *pagest
 		err = AddLink(db, id, shortcode, URL)
 		if err != nil {
 			log.Println(err.Error())
-			return c.String(500, "Error adding link to database")
+			return c.String(http.StatusInternalServerError, "Error adding link to database")
 		}
 
 		// Set all of the data for the form to be displayed
@@ -56,16 +69,16 @@ func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *pagest
 
 		fmt.Printf("Added link id: %d | shortcode: %s | url: %s\n", id, shortcode, URL)
 
-		return c.Render(200, "shortcode-form", data)
+		return c.Render(http.StatusOK, "shortcode-form", data)
 	}
 
 	// This can only be hit if /create is visited without the form being filled out
 	// This should not be possible because of client side validataion
 	data.ShortcodeForm.URL = URL
 	data.ShortcodeForm.Result = ""
-	return c.Render(200, "shortcode-form", data)
+	return c.Render(http.StatusOK, "shortcode-form", data)
 }
 
 func HandleUserPage(c echo.Context, db *sql.DB, data *pagestructs.UserPageData, config *conf.Config) error {
-	return c.Render(200, "user-homepage", data)
+	return c.Render(http.StatusOK, "user-homepage", data)
 }

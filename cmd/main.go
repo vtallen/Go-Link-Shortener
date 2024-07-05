@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"html/template"
 	"io"
 	"strconv"
@@ -49,35 +48,10 @@ func main() {
 
 	e := echo.New() // Create the web server
 
-	// insert, err := db.Prepare("INSERT INTO links (id, shortcode, url) VALUES (?, ?, ?)")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// var id int = codegen.GenRandID(config.Shortcodes.Universe, config.Shortcodes.ShortcodeLength)
-	// var shortcode string = codegen.BaseTenToUniverse(id, config.Shortcodes.Universe)
-	// url := "https://www.startpage.com"
-	// _, err = insert.Exec(id, shortcode, url)
-	// if err != nil {
-	// 	log.Fatal(err.Error())
-	// }
-	// fmt.Println("inserted a link | id: %d | shortcode: %s | url: %s\n", id, shortcode, url)
-
-	// PrintLinksTable(db)
-	fmt.Println("USERS TABLE:\n")
-	PrintUsersTable(db)
-	fmt.Println("SESSION TABLE:\n")
-	sessmngt.PrintSessionTable(db)
-	fmt.Println(config.HCaptcha.SecretKey)
-	fmt.Println(config.HCaptcha.SiteKey)
-	fmt.Println("=========================")
 	// Setup middleware
 	e.Use(middleware.Logger())
 	e.Use(dbMiddleware(db)) // Injects the database variable into the request context
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.Auth.CookieSecret))))
-	// e.Use(sessmngt.SessionMiddleware)
-
-	// Sends the database into echo.Context so that it can be accessed
-	// Setup db middleware
 
 	e.Static("/images", "images")
 	e.Static("/css", "css")
@@ -96,24 +70,36 @@ func main() {
 		indexData.ShortcodeForm.HasError = false
 		indexData.HCaptchaSiteKey = config.HCaptcha.SiteKey
 
-		// testdb := c.Get("db").(*sql.DB)
-		// var email string
-		// err := testdb.QueryRow("SELECT email FROM users WHERE email = ?", "root@root.com").Scan(&email)
-		// if err != nil {
-		// 	return err
-		// } else {
-		// 	fmt.Println("\n\n" + email + "\n\n")
-		// }
+		// The navbar changes based on if a user is logged in or not, this enables the functionality
+		indexData.IsLoggedIn = false
+		err := sessmngt.ValidateSession(c)
+		if err == nil {
+			indexData.IsLoggedIn = true
+		}
+
 		return c.Render(200, "index", indexData)
 	})
 
 	// Page to display errors on
 	e.GET("/error", func(c echo.Context) error {
+		// The navbar changes based on if a user is logged in or not, this enables the functionality
+		errorPageData.IsLoggedIn = false
+		err := sessmngt.ValidateSession(c)
+		if err == nil {
+			errorPageData.IsLoggedIn = true
+		}
+
 		return c.Render(200, "error-page", errorPageData)
 	})
 
 	// Endpoint for the link creation form
 	e.POST("/create", func(c echo.Context) error {
+		indexData.IsLoggedIn = false
+
+		err := sessmngt.ValidateSession(c)
+		if err == nil {
+			indexData.IsLoggedIn = true
+		}
 		return HandleAddLink(c, db, config, &indexData)
 	})
 
@@ -129,6 +115,13 @@ func main() {
 		loginData.ErrorText = ""
 		loginData.LoginForm.Email = ""
 		loginData.HCaptchaSiteKey = config.HCaptcha.SiteKey
+
+		// The navbar changes based on if a user is logged in or not, this enables the functionality
+		loginData.IsLoggedIn = false
+		err := sessmngt.ValidateSession(c)
+		if err == nil {
+			loginData.IsLoggedIn = true
+		}
 
 		return sessmngt.HandleLoginPage(c, &loginData, config)
 	})
@@ -152,6 +145,13 @@ func main() {
 		registerData.Success = false
 		registerData.HCaptchaSiteKey = config.HCaptcha.SiteKey
 
+		// The navbar changes based on if a user is logged in or not, this enables the functionality
+		registerData.IsLoggedIn = false
+		err := sessmngt.ValidateSession(c)
+		if err == nil {
+			registerData.IsLoggedIn = true
+		}
+
 		return sessmngt.HandleRegisterPage(c, &registerData, config)
 	})
 
@@ -163,19 +163,10 @@ func main() {
 	// Endpoint for the user dashboard
 	userPageData := pagestructs.UserPageData{}
 	e.GET("/user", func(c echo.Context) error {
+		userPageData.IsLoggedIn = true // We can assume that this is the case as sessmngt.SessionMiddleware will only allow authenticated users
 		return HandleUserPage(c, db, &userPageData, config)
 	}, sessmngt.SessionMiddleware)
 
-	// testSession := sessmngt.UserSession{SessId: "12", UserId: 1}
-	// testSession.StoreExpiryTime(5)
-	// for true {
-	// 	if testSession.IsValid() {
-	// 		fmt.Println("Valid")
-	// 	} else {
-	// 		fmt.Println("Not valid")
-	// 		break
-	// 	}
-	// }
 	e.Logger.Info(config.HCaptcha.SiteKey)
 
 	e.Logger.Fatal(e.StartTLS(":"+strconv.Itoa(config.Server.Port), config.Auth.TLSCert, config.Auth.TLSKey)) // Run the server

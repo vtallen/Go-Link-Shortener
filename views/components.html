@@ -23,24 +23,37 @@
       <a class="navbar-brand" href="/">Link Shortener</a>
 
       <div class="d-flex align-items-center">
+        <button class="btn btn-link d-lg-none ms-2" type="button"
+          onclick="window.open('https://github.com/vtallen/Go-Link-Shortener', '_blank')">
+          <img src="/images/github-mark.svg" alt="GitHub Mark" width="25px" height="25px">
+        </button>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
           aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" style="height:35px;">
-
-          <span class="navbar-toggler-icon d-none"></span>
-          <i class="fa fa-user-circle fa-lg"></i>
+          <span class="navbar-toggler-icon"></span>
         </button>
       </div>
 
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
+          {{ if .IsLoggedIn }}
+          <li class="nav-item">
+            <a class="nav-link" href="/logout" hx-get="/logout" hx-target="body">Logout</a>
+          </li>
+          {{ else }}
+          <li class="nav-item">
+            <a class="nav-link" href="/login">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/register">Register</a>
+          </li>
+
+          {{ end }}
           <!-- <li class="nav-item"> -->
           <!--   <a class="nav-link active" href="#" hx-get="home.html" hx-target="#main-content">Home</a> -->
           <!-- </li> -->
           <li class="nav-item">
-            <a class="nav-link" href="#" hx-get="about.html" hx-target="#main-content">About</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" hx-get="contact.html" hx-target="#main-content">Contact</a>
+            <a class="nav-link" href="/about" hx-get="about.html">About</a>
           </li>
 
         </ul>

@@ -19,5 +19,5 @@ auth:
   cookie_secret: "secret"
 
 hcaptcha:
-  secret_key: "abcd"
-  site_key: "abcde"
+  secret_key: "ES_92efbbb779f8426aafd87f8b828fe1f3"
+  site_key: "7b2628fa-d590-4b4c-8340-7162d718e9f8"

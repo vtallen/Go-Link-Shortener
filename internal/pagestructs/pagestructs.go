@@ -1,6 +1,8 @@
 package pagestructs
 
-import "github.com/vtallen/go-link-shortener/internal/conf"
+import (
+	"github.com/vtallen/go-link-shortener/internal/conf"
+)
 
 /*
 * Name: IndexData
@@ -8,20 +10,26 @@ import "github.com/vtallen/go-link-shortener/internal/conf"
 * Description: This struct is used to pass data to the index page.
  */
 type IndexData struct {
-	ShortcodeForm   ShortcodeForm
-	Server          *conf.Server
-	HCaptchaSiteKey string
+	ShortcodeForm   ShortcodeForm // Contains information for the re-filling of the form upon unseccessful completion
+	Server          *conf.Server  // Contains config information about the hostname of the server for the generated shortcodes
+	HCaptchaSiteKey string        // Used to enable the use of hCaptcha
+
+	IsLoggedIn bool // Used by the navbar to change what appears based on if a user is logged in
 }
 
-type UserPageData struct{}
+type UserPageData struct {
+	IsLoggedIn bool
+}
 
 type ShortcodeForm struct {
-	URL      string
-	Result   string
-	HasError bool
+	URL       string
+	Result    string
+	HasError  bool
+	ErrorText string
 }
 type ErrorPageData struct {
-	ErrorText string
+	ErrorText  string
+	IsLoggedIn bool // Used by the navbar to change what appears based on if a user is logged in
 }
 
 /*

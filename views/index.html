@@ -16,6 +16,16 @@
 {{ end }}
 
 {{ block "shortcode-form" . }}
+<script>
+  document.addEventListener("htmx:afterSwap", function (event) {
+    if (event.detail.target.id === "create-shortcode-form") {
+      hcaptcha.render(document.querySelector('.h-captcha'), {
+        sitekey: '{{ .HCaptchaSiteKey }}'
+      });
+    }
+  });
+</script>
+
 <div class="container" id="create-shortcode-form">
   <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
@@ -25,6 +35,9 @@
             }} value="{{ urlquery .ShortcodeForm.URL }}" {{ end }} required>
           <button type="submit" class="btn btn-primary input-group-append">Submit</button>
         </div>
+        {{ if not .IsLoggedIn }}
+        {{ template "h-captcha" . }}
+        {{ end }}
 
 
         <div id="result">
@@ -40,7 +53,7 @@
         {{ if .ShortcodeForm.HasError }}
         <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          <p>There was an error submitting the URL, please try again</p>
+          <p>{{ .ShortcodeForm.ErrorText }}</p>
         </div>
         {{ end }}
 

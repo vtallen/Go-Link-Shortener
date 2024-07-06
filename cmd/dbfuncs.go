@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/vtallen/go-link-shortener/internal/globalstructs"
 	"log"
 	"math/rand"
 
@@ -13,12 +14,6 @@ import (
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
 )
 
-type Link struct {
-	ID        int
-	Shortcode string
-	Url       string
-}
-
 type APIKey struct {
 	key  string
 	user string
@@ -26,7 +21,7 @@ type APIKey struct {
 
 func SetupDB(db *sql.DB) {
 	// Create the links table if it doesn't exist
-	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY, shortcode TEXT, url TEXT)")
+	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY, shortcode TEXT, url TEXT, userId INTEGER)")
 	if err != nil {
 		log.Fatal(err)
 		panic("DB setup failed, table links")
@@ -90,8 +85,8 @@ func GenShortcode(universe string, maxchars int) (string, int) {
 	return codegen.BaseTenToUniverse(id, universe), id
 }
 
-func GetLink(db *sql.DB, id int) (*Link, error) {
-	var link Link
+func GetLink(db *sql.DB, id int) (*globalstructs.Link, error) {
+	var link globalstructs.Link
 	err := db.QueryRow("SELECT id, url FROM links WHERE id = ?", id).Scan(&link.ID, &link.Url)
 	if err != nil {
 		return nil, err
@@ -99,13 +94,13 @@ func GetLink(db *sql.DB, id int) (*Link, error) {
 	return &link, nil
 }
 
-func AddLink(db *sql.DB, id int, shortcode string, url string) error {
-	insert, err := db.Prepare("INSERT INTO links (id, shortcode, url) VALUES (?, ?, ?)")
+func AddLink(db *sql.DB, id int, shortcode string, url string, userId int) error {
+	insert, err := db.Prepare("INSERT INTO links (id, shortcode, url, userId) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = insert.Exec(id, shortcode, url)
+	_, err = insert.Exec(id, shortcode, url, userId)
 	if err != nil {
 		log.Fatal(err.Error())
 		return err
@@ -138,16 +133,16 @@ func GetAllUsers(db *sql.DB) []sessmngt.UserLogin {
 	return users
 }
 
-func GetAllLinks(db *sql.DB) []Link {
-	rows, err := db.Query("SELECT id, shortcode, url FROM links")
+func GetAllLinks(db *sql.DB) []globalstructs.Link {
+	rows, err := db.Query("SELECT id, shortcode, url, userId FROM links")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	var links []Link
+	var links []globalstructs.Link
 	for rows.Next() {
-		var link Link
-		if err := rows.Scan(&link.ID, &link.Shortcode, &link.Url); err != nil {
+		var link globalstructs.Link
+		if err := rows.Scan(&link.ID, &link.Shortcode, &link.Url, &link.UserId); err != nil {
 			log.Fatal(err.Error())
 		}
 
@@ -177,10 +172,10 @@ func GetAPIKeys(db *sql.DB) []APIKey {
 }
 
 func PrintLinksTable(db *sql.DB) {
-	var links []Link = GetAllLinks(db)
+	var links []globalstructs.Link = GetAllLinks(db)
 
 	for idx := 0; idx < len(links); idx++ {
-		fmt.Printf("id: %d | shortcode: %s | url: %s\n", links[idx].ID, links[idx].Shortcode, links[idx].Url)
+		fmt.Printf("id: %d | shortcode: %s | url: %s | userId: %d\n", links[idx].ID, links[idx].Shortcode, links[idx].Url, links[idx].UserId)
 	}
 }
 

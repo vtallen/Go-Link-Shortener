@@ -1,4 +1,4 @@
-package pagestructs
+package globalstructs
 
 import (
 	"github.com/vtallen/go-link-shortener/internal/conf"
@@ -18,6 +18,7 @@ type IndexData struct {
 }
 
 type UserPageData struct {
+	LinksData  []Link
 	IsLoggedIn bool
 }
 
@@ -62,4 +63,11 @@ type RegisterData struct {
 type RegisterForm struct {
 	Email    string
 	Password string
+}
+
+type Link struct {
+	ID        int
+	Shortcode string
+	Url       string
+	UserId    int
 }

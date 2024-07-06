@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/sessions"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/vtallen/go-link-shortener/internal/conf"
-	"github.com/vtallen/go-link-shortener/internal/pagestructs"
+	"github.com/vtallen/go-link-shortener/internal/globalstructs"
 	"github.com/vtallen/go-link-shortener/internal/sessmngt"
 
 	"github.com/labstack/echo-contrib/session"
@@ -59,9 +59,9 @@ func main() {
 	e.Renderer = newTemplate() // Load the templates
 
 	// Setup data structs for the different pages
-	indexData := pagestructs.IndexData{}
+	indexData := globalstructs.IndexData{}
 	indexData.Server = &config.Server
-	errorPageData := pagestructs.ErrorPageData{ErrorText: "No error"}
+	errorPageData := globalstructs.ErrorPageData{ErrorText: "No error"}
 
 	// Serve the index page
 	e.GET("/", func(c echo.Context) error {
@@ -108,7 +108,7 @@ func main() {
 		return HandleRedirect(c, db, config)
 	})
 
-	loginData := pagestructs.LoginData{} // Data used by login/register pages
+	loginData := globalstructs.LoginData{} // Data used by login/register pages
 	// Endpoint that handles serving the login page
 	e.GET("/login", func(c echo.Context) error {
 		loginData.HasError = false
@@ -137,7 +137,7 @@ func main() {
 	})
 
 	// Endpoint that serves the register page
-	registerData := pagestructs.RegisterData{}
+	registerData := globalstructs.RegisterData{}
 	e.GET("/register", func(c echo.Context) error {
 		registerData.HasError = false
 		registerData.ErrorText = ""
@@ -161,7 +161,7 @@ func main() {
 	})
 
 	// Endpoint for the user dashboard
-	userPageData := pagestructs.UserPageData{}
+	userPageData := globalstructs.UserPageData{}
 	e.GET("/user", func(c echo.Context) error {
 		userPageData.IsLoggedIn = true // We can assume that this is the case as sessmngt.SessionMiddleware will only allow authenticated users
 		return HandleUserPage(c, db, &userPageData, config)

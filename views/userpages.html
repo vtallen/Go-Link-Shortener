@@ -5,7 +5,29 @@
 
 <body>
   <div id="main-content" class="container mt-4">
-    <p>congrats, restricted area</p>
+    <div class="container">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Shortcode</th>
+            <th scope="col">URL</th>
+            <th scope="col"># of Clicks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows get inserted here -->
+          {{ range .LinksData }}
+          <tr id="link-{{ .ID }}">
+            <td><a href="{{ .Url }}" target="_blank">{{ .Shortcode }}</a></td>
+            <td>{{ .Url }}</td>
+            <td>0</td>
+            <td><button type="button" class="btn btn-danger">Delete</button></td>
+          </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+
   </div>
 </body>
 {{ end }}

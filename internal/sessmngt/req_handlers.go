@@ -10,14 +10,14 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4" //lint:ignore
 	"github.com/vtallen/go-link-shortener/internal/conf"
-	"github.com/vtallen/go-link-shortener/internal/pagestructs"
+	"github.com/vtallen/go-link-shortener/internal/globalstructs"
 )
 
 /*
 * Function:
 *
 * Parameters: c echo.Context - The context for the current request
-*             data *pagestructs.LoginData - The needed paged data for the template/functionality
+*             data *globalstructs.LoginData - The needed paged data for the template/functionality
 *             config *conf.Config - The configuration struct for the server
 *
 * Returns: error
@@ -25,7 +25,7 @@ import (
 * Description: Handles serving the login page found in views/login.html from a GET request
 *
  */
-func HandleLoginPage(c echo.Context, data *pagestructs.LoginData, config *conf.Config) error {
+func HandleLoginPage(c echo.Context, data *globalstructs.LoginData, config *conf.Config) error {
 	return c.Render(200, "login", data)
 }
 
@@ -33,7 +33,7 @@ func HandleLoginPage(c echo.Context, data *pagestructs.LoginData, config *conf.C
 * Function:
 *
 * Parameters: c echo.Context - The context for the current request
-*             data *pagestructs.LoginData - The needed paged data for the template/functionality
+*             data *globalstructs.LoginData - The needed paged data for the template/functionality
 *             config *conf.Config - The configuration struct for the server
 *
 * Returns: error
@@ -42,7 +42,7 @@ func HandleLoginPage(c echo.Context, data *pagestructs.LoginData, config *conf.C
 *              user homepage
 *
  */
-func HandleLoginSession(c echo.Context, data *pagestructs.LoginData, config *conf.Config) error {
+func HandleLoginSession(c echo.Context, data *globalstructs.LoginData, config *conf.Config) error {
 	db := c.Get("db").(*sql.DB)
 
 	email := c.FormValue("email")
@@ -150,12 +150,12 @@ func HandleLoginSession(c echo.Context, data *pagestructs.LoginData, config *con
 func HandleLogout(c echo.Context, config *conf.Config) error {
 	sess, err := session.Get("session", c)
 	if err != nil {
-		return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error getting session, could not log out"})
+		return c.Render(http.StatusMovedPermanently, "error-page", globalstructs.ErrorPageData{ErrorText: "Error getting session, could not log out"})
 	}
 
 	err = InvalidateSession(sess, c)
 	if err != nil {
-		return c.Render(http.StatusMovedPermanently, "error-page", pagestructs.ErrorPageData{ErrorText: "Error saving session, could not log out"})
+		return c.Render(http.StatusMovedPermanently, "error-page", globalstructs.ErrorPageData{ErrorText: "Error saving session, could not log out"})
 	}
 
 	return c.Redirect(http.StatusFound, "/login")
@@ -174,7 +174,7 @@ func HandleLogout(c echo.Context, config *conf.Config) error {
 *
  */
 
-func HandleRegisterPage(c echo.Context, data *pagestructs.RegisterData, config *conf.Config) error {
+func HandleRegisterPage(c echo.Context, data *globalstructs.RegisterData, config *conf.Config) error {
 	sess, err := session.Get("session", c)
 	if err != nil {
 		data.HasError = true
@@ -203,7 +203,7 @@ func HandleRegisterPage(c echo.Context, data *pagestructs.RegisterData, config *
 *
  */
 
-func HandleRegisterSession(c echo.Context, data *pagestructs.RegisterData, config *conf.Config) error {
+func HandleRegisterSession(c echo.Context, data *globalstructs.RegisterData, config *conf.Config) error {
 	db := c.Get("db").(*sql.DB)
 
 	email := c.FormValue("email")

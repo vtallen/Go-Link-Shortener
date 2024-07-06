@@ -38,7 +38,10 @@
         <ul class="navbar-nav">
           {{ if .IsLoggedIn }}
           <li class="nav-item">
-            <a class="nav-link" href="/logout" hx-get="/logout" hx-target="body">Logout</a>
+            <a class="nav-link" href="/user" hx-get="/user" hx-push-url="/user" hx-target="body">My Links</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/logout" hx-get="/logout" hx-target="body" hx-push-url="/login">Logout</a>
           </li>
           {{ else }}
           <li class="nav-item">
@@ -49,9 +52,6 @@
           </li>
 
           {{ end }}
-          <!-- <li class="nav-item"> -->
-          <!--   <a class="nav-link active" href="#" hx-get="home.html" hx-target="#main-content">Home</a> -->
-          <!-- </li> -->
           <li class="nav-item">
             <a class="nav-link" href="/about" hx-get="about.html">About</a>
           </li>

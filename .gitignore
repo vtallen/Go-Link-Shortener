@@ -1,0 +1,9 @@
+.idea/
+*.db
+**/tmp/
+tmp/
+*.key
+*.pem
+main
+server
+config.yml

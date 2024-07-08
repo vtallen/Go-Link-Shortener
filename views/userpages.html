@@ -1,0 +1,51 @@
+{{ block "link-rows" . }}
+{{ range .LinksData }}
+<tr id="row-{{.ID}}">
+  <td><a href="/{{ .Shortcode }}" target="_blank">{{ .Shortcode }}</a></td>
+  <td><a href="{{ .Url }}" target="_blank">{{ .Url }}</a></td>
+  <td>{{.Clicks}}</td>
+  <td>
+    <form>
+      <input name="link-id" type="hidden" value="{{.ID}}" />
+      <button type="button" class="btn btn-danger" id="{{ .ID }}" hx-vals="{id: this.id }" hx-post="/delete"
+        hx-swap="outerHTML" hx-target="#row-{{.ID}}" hx-vals='{"id": {{.ID}}}'>Delete</button>
+    </form>
+  </td>
+</tr>
+{{ end }}
+
+{{ if .LinksDataEmpty }}
+<tr>
+  <td colspan="4" class="text-center">No links</td>
+</tr>
+{{ end }}
+
+{{ end }}
+
+{{ block "user-homepage" . }}
+<!DOCTYPE html>
+{{ template "head" . }}
+{{ template "navbar" . }}
+
+<body>
+  <div id="main-content" class="container mt-4">
+    <div class="container">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Shortcode</th>
+            <th scope="col">URL</th>
+            <th scope="col"># of Clicks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows get inserted here -->
+          <div id="link-rows">
+            {{ template "link-rows" . }}
+          </div>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+{{ end }}

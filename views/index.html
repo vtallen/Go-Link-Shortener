@@ -1,0 +1,65 @@
+{{ block "index" . }}
+<!DOCTYPE html>
+<html lang="en">
+
+{{ template "head" . }}
+{{ template "navbar" . }}
+
+<body>
+  <div id="main-content" class="container mt-4">
+    <h1 class="text-center display-5">Enter a URL to generate a short link</h1>
+    {{ template "shortcode-form" .}}
+  </div>
+</body>
+
+</html>
+{{ end }}
+
+{{ block "shortcode-form" . }}
+<script>
+  document.addEventListener("htmx:afterSwap", function (event) {
+    if (event.detail.target.id === "create-shortcode-form") {
+      hcaptcha.render(document.querySelector('.h-captcha'), {
+        sitekey: '{{ .HCaptchaSiteKey }}'
+      });
+    }
+  });
+</script>
+
+<div class="container" id="create-shortcode-form">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <form id="urlForm" hx-post="/create" hx-trigger="submit" hx-target="#create-shortcode-form" hx-swap="outerHTML">
+        <div class="input-group mb-3">
+          <input name="url" type="url" class="form-control" placeholder="https://example.com" {{ if .ShortcodeForm.URL
+            }} value="{{ urlquery .ShortcodeForm.URL }}" {{ end }} required>
+          <button type="submit" class="btn btn-primary input-group-append">Submit</button>
+        </div>
+        {{ if not .IsLoggedIn }}
+        {{ template "h-captcha" . }}
+        {{ end }}
+
+
+        <div id="result">
+          {{ if .ShortcodeForm.Result }}
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <p>Link: <a target="_blank" href="/{{ .ShortcodeForm.Result }}">{{ .Server.Host }}/{{ .ShortcodeForm.Result
+                }}</a></p>
+          </div>
+          {{ end }}
+        </div>
+
+        {{ if .ShortcodeForm.HasError }}
+        <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          <p>{{ .ShortcodeForm.ErrorText }}</p>
+        </div>
+        {{ end }}
+
+      </form>
+    </div>
+  </div>
+</div>
+</div>
+{{ end }}

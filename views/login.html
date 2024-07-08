@@ -1,0 +1,150 @@
+{{ block "login-form" .}}
+<!-- This script ensures that the hcaptcha gets re-rendered when an error message is sent down and registration fails -->
+<script>
+  document.addEventListener("htmx:afterSwap", function (event) {
+    if (event.detail.target.id === "login-form") {
+      hcaptcha.render(document.querySelector('.h-captcha'), {
+        sitekey: '{{ .HCaptchaSiteKey }}'
+      });
+    }
+  });
+</script>
+
+
+<form id="login-form" hx-post="/login" hx-trigger="submit" hx-target="#login-form" hx-swap="innerHTML">
+  <div class="input-group mb-3">
+    <input name="email" type="text" class="form-control" placeholder="Email" {{ if .LoginForm.Email }}
+      value="{{ .LoginForm.Email }}" {{ end }}required>
+  </div>
+  <div class="input-group mb-3">
+    <input name="password" type="password" class="form-control" placeholder="Password" required>
+  </div>
+
+  {{ template "h-captcha" . }}
+
+  <div class="d-grid">
+    <button type="submit" class="btn btn-primary input-group-append">Login</button>
+  </div>
+
+  {{ if .HasError }}
+  {{ if .IsLoggedIn }}
+  <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- Sends a get request to /logout which destroys any cookie held by the client, 
+    and redirects to the login page. In this instance we target the body so the whole application gets replaced
+    -->
+    <p>Already logged in. <a class="link-primary" href="" hx-get="/logout" hx-target="body">Logout</a></p>
+  </div>
+
+  {{ else }}
+  <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <p>Error: {{ .ErrorText }}</p>
+  </div>
+  {{ end }}
+  {{ end }}
+</form>
+
+{{ end }}
+
+{{ block "login" .}}
+<!DOCTYPE html>
+{{ template "head" . }}
+{{ template "navbar" . }}
+
+<body>
+  <div id="main-content" class="container mt-4">
+    <h1 class="text-center display-5">Login</h1>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          {{ template "login-form" .}}
+          <p class="text-center">Don't have an account? <a href="/register">Register here</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+{{ end }}
+
+{{ block "register-form" . }}
+<!-- This script ensures that the hcaptcha gets re-rendered when an error message is sent down and registration fails -->
+<script>
+  document.addEventListener("htmx:afterSwap", function (event) {
+    if (event.detail.target.id === "register-form") {
+      hcaptcha.render(document.querySelector('.h-captcha'), {
+        sitekey: '{{ .HCaptchaSiteKey }}'
+      });
+    }
+  });
+</script>
+
+<!-- Make sure the user is logged out before they can create an account -->
+{{ if .IsLoggedIn }}
+<div id="errors" class="alert alert-danger fade show" role="alert">
+  <!-- Sends a get request to /logout which destroys any cookie held by the client, 
+    and redirects to the login page. In this instance we target the body so the whole application gets replaced
+    -->
+  <p>Already logged in. <a class="link-primary" href="" hx-get="/logout" hx-target="body">Logout?</a></p>
+</div>
+{{else}}
+<div id="register-form">
+  <form hx-post="/register" hx-trigger="submit" hx-target="#register-form" hx-swap="outerHTML">
+    <div class="input-group mb-3">
+      <input name="email" type="text" class="form-control" placeholder="Email" required>
+    </div>
+    <div class="input-group mb-3">
+      <input name="password" type="password" class="form-control" placeholder="Password" required>
+    </div>
+
+    {{ template "h-captcha" . }}
+
+    <div class="d-grid">
+      <button type="submit" class="btn btn-primary input-group-append">Register</button>
+    </div>
+
+
+    {{ if .HasError }}
+    <div id="errors" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      <p> {{ .ErrorText }} </p>
+    </div>
+    {{ end }}
+
+    {{ if .Success }}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      <p>Account created! <a target="_self" href="/login">Login</a></p>
+    </div>
+    {{ end }}
+
+  </form>
+  <p class="text-center">Passowrd requirements: 7 characters, 1 uppercase, 1 lowercase, 1 number, 1 special character
+  </p>
+  <p class="text-center">Already have an account? <a href="/login">Login here</a></p>
+</div>
+{{ end }}
+{{ end }}
+
+{{ block "register" . }}
+<!DOCTYPE html>
+{{ template "head" . }}
+{{ template "navbar" . }}
+
+<body>
+  <div id="main-content" class="container mt-4">
+    <h1 class="text-center display-5">Register</h1>
+    <div class="container" id="login-form">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          {{ template "register-form" . }}
+        </div>
+        <div class="d-grid">
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+{{ end }}

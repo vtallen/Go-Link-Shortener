@@ -105,10 +105,10 @@ func main() {
 	}
 	defer db.Close()
 
-	// Initalize tables in the database
-	SetupDB(db)
-
 	e := echo.New() // Create the web server
+
+	// Initalize tables in the database
+	SetupDB(db, e)
 
 	file, err := os.OpenFile(config.Logging.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {

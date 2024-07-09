@@ -9,7 +9,7 @@
 package conf
 
 import (
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -24,7 +24,7 @@ import (
 * Description: This function loads the configuration from the file specified by the filename parameter
  */
 func LoadConfig(filename string) (*Config, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

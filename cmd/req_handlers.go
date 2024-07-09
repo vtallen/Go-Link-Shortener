@@ -1,8 +1,15 @@
+/*
+* File cmd/req_handlers.go
+*
+* Description: This file contains all the request handlers for the web server that are not involved in
+*              session management or authentication
+*
+ */
+
 package main
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -15,7 +22,23 @@ import (
 	"github.com/vtallen/go-link-shortener/pkg/codegen"
 )
 
-func HandleRedirect(c echo.Context, db *sql.DB, config *conf.Config) error {
+/*
+* Function: HandleRedirect
+*
+* Parameters: c      echo.Context - The context of the request
+*            config *conf.Config - The configuration for the application
+*
+* Returns: error - If there is an error redirecting the user
+*
+* Description: This function handles the redirecting of the user to the correct URL based on the shortcode in the url
+*
+ */
+func HandleRedirect(c echo.Context, config *conf.Config) error {
+	db, ok := c.Get("db").(*sql.DB)
+	if !ok {
+		c.Logger().Errorf("Could not get db from context, failed to convert to *sql.DB")
+		return c.String(http.StatusInternalServerError, "Internal server error")
+	}
 	shortcode := c.Param("shortcode")
 
 	// Figure out the id
@@ -30,13 +53,31 @@ func HandleRedirect(c echo.Context, db *sql.DB, config *conf.Config) error {
 	// Increment the click counter for the link
 	err = IncrementLinkClickCount(db, id)
 	if err != nil {
-		// TODO add logging later
+		c.Logger().Errorf("Could not increment click count for link id: %d", id)
 	}
 
 	return c.Redirect(http.StatusMovedPermanently, link.Url) // If a url exists, redirect the user to it
 }
 
-func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *globalstructs.IndexData) error {
+/*
+* Function: HandleAddLink
+*
+* Parameters: c      echo.Context             - The context of the request
+*             config *conf.Config             - The configuration for the application
+*             data   *globalstructs.IndexData - The data to pass to the template
+*
+* Returns: error - If there is an error adding the link to the database
+*
+* Description: This function handles the adding of a link to the database from a POST request to /create
+*
+ */
+func HandleAddLink(c echo.Context, config *conf.Config, data *globalstructs.IndexData) error {
+	db, ok := c.Get("db").(*sql.DB)
+	if !ok {
+		c.Logger().Errorf("Could not get db from context, failed to convert to *sql.DB")
+		return c.String(http.StatusInternalServerError, "Internal server error")
+	}
+
 	URL := c.FormValue("url")
 	if URL != "" {
 		// Check the captcha if the user is not logged in
@@ -78,13 +119,17 @@ func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *global
 				return c.Render(http.StatusOK, "shortcode-form", data)
 			}
 			err = AddLink(db, id, shortcode, URL, userId)
+			if err != nil {
+				c.Logger().Errorf("Could not add link to database: %s", err.Error())
+				return c.String(http.StatusInternalServerError, "Error adding link to database")
+			}
+
 		} else {
 			err = AddLink(db, id, shortcode, URL, -1)
-		}
-
-		if err != nil {
-			log.Println(err.Error())
-			return c.String(http.StatusInternalServerError, "Error adding link to database")
+			if err != nil {
+				c.Logger().Errorf("Could not add link to database: %s", err.Error())
+				return c.String(http.StatusInternalServerError, "Error adding link to database")
+			}
 		}
 
 		// Set all of the data for the form to be displayed
@@ -102,17 +147,33 @@ func HandleAddLink(c echo.Context, db *sql.DB, config *conf.Config, data *global
 	return c.Render(http.StatusOK, "shortcode-form", data)
 }
 
+/*
+* Function: HandleDeleteLink
+*
+* Parameters: c echo.Context - The context of the request
+*
+* Returns: error - If there is an error deleting the link from the database
+*
+* Description: This function handles the deletion of a link from the database from a POST request to /delete from
+*              the user page
+*
+ */
 func HandleDeleteLink(c echo.Context) error {
-	db := c.Get("db").(*sql.DB)
+	db, ok := c.Get("db").(*sql.DB)
+	if !ok {
+		c.Logger().Errorf("Could not get db from context, failed to convert to *sql.DB")
+		return c.String(http.StatusInternalServerError, "Internal server error")
+	}
+
 	id, err := strconv.Atoi(c.FormValue("link-id"))
 	if err != nil {
-		// TODO: Add logging
+		c.Logger().Errorf("Could not convert link-id to int: %s\n", err.Error())
 		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	err = DeleteLink(db, id)
 	if err != nil {
-		// TODO: Add logging
+		c.Logger().Errorf("Could not delete link with id: %d from database with error: %s", id, err.Error())
 		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
@@ -120,20 +181,41 @@ func HandleDeleteLink(c echo.Context) error {
 	return nil
 }
 
-func HandleUserPage(c echo.Context, db *sql.DB, data *globalstructs.UserPageData, config *conf.Config) error {
+/*
+* Function: HandleUserPage
+*
+* Parameters: c    echo.Context                - The context of the request
+*             data *globalstructs.UserPageData - The data to pass to the template
+*I            config *conf.Config              - The configuration for the application
+*
+* Returns: error - If there is an error getting the user links from the database
+*
+* Description: This function handles the rendering of the user page and getting the user links
+*
+ */
+func HandleUserPage(c echo.Context, data *globalstructs.UserPageData, config *conf.Config) error {
+	db, ok := c.Get("db").(*sql.DB)
+	if !ok {
+		c.Logger().Errorf("Could not get db from context, failed to convert to *sql.DB\n")
+		return c.String(http.StatusInternalServerError, "Internal server error")
+	}
+
 	sess, err := session.Get("session", c)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Internal server error 1")
+		c.Logger().Errorf("Could not get session from context: %s\n", err.Error())
+		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	userId, ok := sess.Values["userId"].(int)
 	if !ok {
-		return c.String(http.StatusInternalServerError, "Internal server error 2")
+		c.Logger().Errorf("Could not convert the session userId to int.\n")
+		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	data.LinksData, err = GetUserLinks(db, userId)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Internal server error 3")
+		c.Logger().Error("Could not get user links from database. Error:%s\n ", err.Error())
+		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	if len(data.LinksData) == 0 {

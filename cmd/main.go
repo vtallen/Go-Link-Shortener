@@ -170,7 +170,7 @@ func main() {
 
 	// Endpoint for the link creation form
 	e.POST("/create", func(c echo.Context) error {
-		return HandleAddLink(c, db, config, &indexData)
+		return HandleAddLink(c, config, &indexData)
 	})
 
 	// Endpoint that handles link deletion from the /user endpoint page
@@ -180,7 +180,7 @@ func main() {
 
 	// Endpoint that redirects the user to the stored url if it exists
 	e.GET("/:shortcode", func(c echo.Context) error {
-		return HandleRedirect(c, db, config)
+		return HandleRedirect(c, config)
 	})
 
 	loginData := globalstructs.LoginData{} // Data used by login/register pages
@@ -239,7 +239,7 @@ func main() {
 	userPageData := globalstructs.UserPageData{}
 	e.GET("/user", func(c echo.Context) error {
 		userPageData.IsLoggedIn = true // We can assume that this is the case as sessmngt.SessionMiddleware will only allow authenticated users
-		return HandleUserPage(c, db, &userPageData, config)
+		return HandleUserPage(c, &userPageData, config)
 	}, sessmngt.SessionMiddleware)
 
 	e.Logger.Fatal(e.StartTLS(":"+strconv.Itoa(config.Server.Port), config.Auth.TLSCert, config.Auth.TLSKey)) // Run the server

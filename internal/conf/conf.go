@@ -24,14 +24,12 @@ type Config struct {
 	Shortcodes Shortcodes
 	Auth       Auth
 	Server     Server
+	Logging    Logging
 	Database   Database
 	HCaptcha   HCaptcha
 }
 
 type Auth struct {
-	ApiKeyLen        int    `yaml:"api_key_length"`
-	RootUsername     string `yaml:"root_username"`
-	RootPassword     string `yaml:"root_password"`
 	TLSCert          string `yaml:"tls_cert"`
 	TLSKey           string `yaml:"tls_key"`
 	CookieMaxAgeDays int    `yaml:"cookie_max_age_days"`
@@ -55,4 +53,9 @@ type Database struct {
 type Shortcodes struct {
 	ShortcodeLength int    `yaml:"shortcode_length"`
 	Universe        string `yaml:"shortcode_universe"`
+}
+
+type Logging struct {
+	LogLevel string `yaml:"log_level"`
+	LogFile  string `yaml:"log_file"`
 }

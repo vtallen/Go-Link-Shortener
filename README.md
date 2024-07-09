@@ -21,3 +21,10 @@ This project is a simple bitly clone that shortens URLs.
 ---
 1. Make a copy of config_template.yaml and rename it to config.yaml
 2. Generate tls certificates 
+
+## TODO
+---
+* Document all functions
+* Replace any print statements with log statements
+* Add logging to the handlers where needed
+* Enable auto tls

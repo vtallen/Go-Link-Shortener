@@ -1,0 +1,14 @@
+
+   ____    __
+  / __/___/ /  ___
+ / _// __/ _ \/ _ \
+/___/\__/_//_/\___/ v4.12.0
+High performance, minimalist Go web framework
+https://echo.labstack.com
+____________________________________O/_______
+                                    O\
+⇨ https server started on [::]:8080
+{"time":"2024-07-09T15:34:07.98604794-04:00","id":"","remote_ip":"127.0.0.1","host":"localhost:8080","method":"GET","uri":"/register","user_agent":"Mozilla/5.0 (X11; Linux x86_64; rv:127.0) Gecko/20100101 Firefox/127.0","status":200,"error":"","latency":214079,"latency_human":"214.079µs","bytes_in":0,"bytes_out":3975}
+{"time":"2024-07-09T15:34:07.986124192-04:00","id":"","remote_ip":"127.0.0.1","host":"localhost:8080","method":"GET","uri":"/register","user_agent":"Mozilla/5.0 (X11; Linux x86_64; rv:127.0) Gecko/20100101 Firefox/127.0","status":200,"error":"","latency":288718,"latency_human":"288.718µs","bytes_in":0,"bytes_out":3975}
+{"time":"2024-07-09T15:34:08.21113202-04:00","id":"","remote_ip":"127.0.0.1","host":"localhost:8080","method":"GET","uri":"/favicon.ico","user_agent":"Mozilla/5.0 (X11; Linux x86_64; rv:127.0) Gecko/20100101 Firefox/127.0","status":404,"error":"","latency":230620,"latency_human":"230.62µs","bytes_in":0,"bytes_out":2605}
+{"time":"2024-07-09T15:34:08.211168418-04:00","id":"","remote_ip":"127.0.0.1","host":"localhost:8080","method":"GET","uri":"/favicon.ico","user_agent":"Mozilla/5.0 (X11; Linux x86_64; rv:127.0) Gecko/20100101 Firefox/127.0","status":404,"error":"","latency":267929,"latency_human":"267.929µs","bytes_in":0,"bytes_out":2605}

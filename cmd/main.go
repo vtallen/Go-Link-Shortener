@@ -1,9 +1,17 @@
+/*
+* File: cmd/main.go
+*
+* Description: The main entry point for the application, this file is responsible for setting up the web server, database, and routing
+*
+ */
+
 package main
 
 import (
 	"database/sql"
 	"html/template"
 	"io"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/sessions"
@@ -15,19 +23,72 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 )
 
+/*
+* Struct: Templates
+*
+* Description: This struct is used to store the html templates for the web server that get ingested at startup
+*
+ */
 type Templates struct {
 	templates *template.Template
 }
 
+/*
+* Function: newTemplate
+*
+* Parameters: None
+*
+* Returns: *Templates - A pointer to the Templates struct containign all the html templates in the views folder
+*
+* Description: This function is used to load all the html templates in the views folder into memory
+*
+ */
+func newTemplate() *Templates {
+	return &Templates{
+		templates: template.Must(template.ParseGlob("views/*.html")),
+	}
+}
+
+/*
+* Function: Templates.Render
+*
+* Parameters: w    io.Writer   - The writer to write the rendered html to
+*             name string      - The name of the template to render
+*             data interface{} - The data to pass to the template
+*
+* Returns: error - Any error that occured during the rendering of the template
+*
+* Description: This function is used to render the html templates to the client
+ */
 func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-func newTemplate() *Templates {
-	return &Templates{
-		templates: template.Must(template.ParseGlob("views/*.html")),
+/*
+* Function: stringToLogLevel
+*
+* Parameters: llstring string - The string representation of the log level
+*
+* Returns: log.Lvl - The log level that corresponds to the string
+*
+* Description: This function is used to convert a string representation of a log level from the config file to the log.Lvl type
+*
+ */
+func stringToLogLevel(llstring string) log.Lvl {
+	switch llstring {
+	case "INFO":
+		return log.INFO
+	case "WARN":
+		return log.WARN
+	case "ERROR":
+		return log.ERROR
+	case "DEBUG":
+		return log.DEBUG
+	default:
+		return log.INFO
 	}
 }
 
@@ -44,9 +105,24 @@ func main() {
 	}
 	defer db.Close()
 
+	// Initalize tables in the database
 	SetupDB(db)
-	PrintLinksTable(db)
+
 	e := echo.New() // Create the web server
+
+	file, err := os.OpenFile(config.Logging.LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		panic("Filed to open log file: " + config.Logging.LogFile + " Error: " + err.Error())
+	}
+
+	// Create the multiwriter that will output to the standard out and the log file
+	multiWriter := io.MultiWriter(os.Stdout, file)
+
+	e.Logger.SetOutput(multiWriter)
+	e.Logger.SetLevel(stringToLogLevel(config.Logging.LogLevel))
+
+	// Setup the logger middleware
+	e.Use(middleware.Logger())
 
 	// Setup middleware
 	e.Use(middleware.Logger())
@@ -94,15 +170,10 @@ func main() {
 
 	// Endpoint for the link creation form
 	e.POST("/create", func(c echo.Context) error {
-		// indexData.IsLoggedIn = false
-
-		// err := sessmngt.ValidateSession(c)
-		// if err == nil {
-		// 	indexData.IsLoggedIn = true
-		// }
 		return HandleAddLink(c, db, config, &indexData)
 	})
 
+	// Endpoint that handles link deletion from the /user endpoint page
 	e.POST("/delete", func(c echo.Context) error {
 		return HandleDeleteLink(c)
 	}, sessmngt.SessionMiddleware)

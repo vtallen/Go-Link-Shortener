@@ -1,3 +1,10 @@
+/*
+* File: internal/session/sess_middleware.go
+*
+* Description: Contains middleware and a function which can be used to check if a user is authenticated and their
+*             session is valid. This is done by checking the session cookie and comparing it to the session stored in the database
+ */
+
 package sessmngt
 
 import (
@@ -63,7 +70,11 @@ func SessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		if !usrSess.IsValid() {
-			usrSess.DeleteDB(db)
+			err := usrSess.DeleteDB(db)
+			if err != nil {
+				c.Logger().Errorf("Could not delete session from the database, error: ", err.Error()+" \n")
+			}
+
 			return c.Redirect(http.StatusMovedPermanently, "/logout")
 		}
 
@@ -127,7 +138,10 @@ func ValidateSession(c echo.Context) error {
 	}
 
 	if !usrSess.IsValid() {
-		usrSess.DeleteDB(db)
+		err := usrSess.DeleteDB(db)
+		if err != nil {
+			c.Logger().Errorf("Could not delete session from the database, error: ", err.Error()+" \n")
+		}
 		return errors.New("session has expired")
 	}
 

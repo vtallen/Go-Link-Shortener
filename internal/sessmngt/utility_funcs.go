@@ -1,3 +1,9 @@
+/*
+* File: internal/session/utility_funcs.go
+*
+* Description: Contains various helper functions needed by other functions in the sessmngt package
+ */
+
 package sessmngt
 
 import (
@@ -188,6 +194,16 @@ func CheckPassword(hash string, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
+/*
+* Function: IsPasswordValid
+*
+* Parameters: s string - The password to check
+*
+* Returns: bool - True if the password is valid
+*
+* Description: This function checks if a password is valid. A valid password must: be at least 7 characters long,
+*              contain at least one uppercase letter, one lowercase letter, one number, and one special character.
+ */
 func IsPasswordValid(s string) bool {
 	var (
 		hasMinLen  = false

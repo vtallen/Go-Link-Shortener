@@ -1,8 +1,13 @@
+/*
+* File: internal/sessmngt/req_handlers.go
+*
+* Description: Contains the request handlers for the login, logout, and register endpoints.
+ */
+
 package sessmngt
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -14,7 +19,7 @@ import (
 )
 
 /*
-* Function:
+* Function: HandleLoginPage
 *
 * Parameters: c echo.Context - The context for the current request
 *             data *globalstructs.LoginData - The needed paged data for the template/functionality
@@ -30,7 +35,7 @@ func HandleLoginPage(c echo.Context, data *globalstructs.LoginData, config *conf
 }
 
 /*
-* Function:
+* Function: HandleLoginSession
 *
 * Parameters: c echo.Context - The context for the current request
 *             data *globalstructs.LoginData - The needed paged data for the template/functionality
@@ -43,7 +48,11 @@ func HandleLoginPage(c echo.Context, data *globalstructs.LoginData, config *conf
 *
  */
 func HandleLoginSession(c echo.Context, data *globalstructs.LoginData, config *conf.Config) error {
-	db := c.Get("db").(*sql.DB)
+	db, ok := c.Get("db").(*sql.DB)
+	if !ok {
+		c.Logger().Errorf("Unable to get db from context\n")
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
 
 	email := c.FormValue("email")
 	password := c.FormValue("password")
@@ -98,7 +107,6 @@ func HandleLoginSession(c echo.Context, data *globalstructs.LoginData, config *c
 		data.HasError = true
 		data.IsLoggedIn = true
 		data.ErrorText = "User already logged in"
-		c.Logger().Info("User already logged in, email: " + email)
 		return c.Render(200, "login-form", data)
 	}
 
@@ -106,17 +114,15 @@ func HandleLoginSession(c echo.Context, data *globalstructs.LoginData, config *c
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Error creating session 1"
-		c.Logger().Info("Error generating session ID: " + err.Error() + " | email: " + email)
+		c.Logger().Warn("Error generating session ID: " + err.Error() + " | email: " + email)
 		return c.Render(200, "login-form", data)
 	}
-
-	fmt.Println(userSession)
 
 	err = userSession.StoreDB(db)
 	if err != nil {
 		data.HasError = true
 		data.ErrorText = "Error creating session 2"
-		c.Logger().Info("Error storing session in DB: " + err.Error() + " | email: " + email)
+		c.Logger().Warn("Error storing session in DB: " + err.Error() + " | email: " + email)
 		return c.Render(200, "login-form", data)
 	}
 
@@ -124,7 +130,7 @@ func HandleLoginSession(c echo.Context, data *globalstructs.LoginData, config *c
 		data.HasError = true
 		data.ErrorText = "Error saving session 3"
 		data.LoginForm.Email = email
-		c.Logger().Info("Error saving session: " + err.Error() + " | email: " + email)
+		c.Logger().Warn("Error saving session: " + err.Error() + " | email: " + email)
 		return c.Render(200, "login-form", data)
 	}
 
@@ -135,7 +141,7 @@ func HandleLoginSession(c echo.Context, data *globalstructs.LoginData, config *c
 }
 
 /*
-* Function:
+* Function: HandleLogout
 *
 * Parameters: c echo.Context - The context for the current request
 *             config *conf.Config - The configuration struct for the server
@@ -146,7 +152,6 @@ func HandleLoginSession(c echo.Context, data *globalstructs.LoginData, config *c
 *              the session cookie if it exists then redirects the user to the /login endpoint
 *
  */
-
 func HandleLogout(c echo.Context, config *conf.Config) error {
 	sess, err := session.Get("session", c)
 	if err != nil {
@@ -191,7 +196,7 @@ func HandleRegisterPage(c echo.Context, data *globalstructs.RegisterData, config
 }
 
 /*
-* Function:
+* Function: HandleRegisterSession
 *
 * Parameters: c echo.Context - The context for the current request
 *             data *pagestructs.RegisterData - The needed paged data for the template/functionality
@@ -221,13 +226,6 @@ func HandleRegisterSession(c echo.Context, data *globalstructs.RegisterData, con
 		return c.Render(200, "register-form", data)
 	}
 
-	// // Validate the hCaptcha element to prevent spam
-	// captchaResponse := c.FormValue("h-captcha-response")
-
-	// hc := hcaptcha.New(config.HCaptcha.SecretKey) //lint:ignore
-	// ip, _, err := net.SplitHostPort(c.Request().RemoteAddr)
-
-	// resp, err := hc.Verify(captchaResponse, ip)
 	err = CheckCaptcha(c, config.HCaptcha.SecretKey)
 	if err != nil {
 		data.HasError = true
@@ -244,6 +242,7 @@ func HandleRegisterSession(c echo.Context, data *globalstructs.RegisterData, con
 		return c.Render(200, "register-form", data)
 	}
 
+	// Get the username from the email
 	splitEmail := strings.Split(email, "@")
 	if len(splitEmail) != 2 {
 		data.HasError = true
@@ -255,7 +254,6 @@ func HandleRegisterSession(c echo.Context, data *globalstructs.RegisterData, con
 
 	// Check if the user exists
 	usr, err := GetUserByEmail(db, email)
-	// fmt.Println(err + "\n\n\n")
 	if err == nil {
 		data.HasError = true
 		data.ErrorText = "User already exists"

@@ -1,3 +1,4 @@
+// File: pkg/codegen/codegen.go
 // Includes utilities for generating random IDs and converting between base-10 and base-N representations
 // This gets used to create shortcodes for a database
 
@@ -8,6 +9,16 @@ import (
 	"math/rand"
 )
 
+/*
+* Function: GenRandID
+*
+* Parameters: universe string - The set of characters to use when generating the random ID
+*             maxchars int - The maximum number of characters in the generated ID
+*
+* Returns: int - The generated random ID
+*
+* Description: Generates a random ID using the given universe of characters and maximum number of characters
+ */
 func GenRandID(universe string, maxchars int) int {
 	max_result := ""
 	for idx := 0; idx < maxchars; idx++ {
@@ -20,6 +31,16 @@ func GenRandID(universe string, maxchars int) int {
 	return result
 }
 
+/*
+* Function: BaseTenToUniverse
+*
+* Parameters: baseten int - The base-10 number to convert
+*             universe string - The set of characters to use when converting to base-N
+*
+* Returns: string - The base-N representation of the base-10 number where n is the length of the universe string
+*
+* Description: Converts a base-10 number to a base-N number using the given universe of characters
+ */
 func BaseTenToUniverse(baseten int, universe string) string {
 	var base int = len(universe)
 	var digits []int
@@ -37,6 +58,16 @@ func BaseTenToUniverse(baseten int, universe string) string {
 	return result
 }
 
+/*
+* Function: UniverseToBaseTen
+*
+* Parameters: input string - The base-N number to convert
+*             universe string - The set of characters to use when converting to base-10
+*
+* Returns: int - The base-10 representation of the base-N number where n is the length of the universe string
+*
+* Description: Converts a base-N number to a base-10 number using the given universe of characters
+ */
 func UniverseToBaseTen(input string, universe string) int {
 	base := len(universe)
 	result := 0

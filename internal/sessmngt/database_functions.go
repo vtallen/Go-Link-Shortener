@@ -1,3 +1,8 @@
+/*
+* File: internal/sessmngt/database_functions.go
+*
+* Description: This file contains functions related to session management and authentication that need to use the database
+ */
 package sessmngt
 
 import (
@@ -12,10 +17,16 @@ import (
 * Session struct functions
 =======================================================
 */
+
+/*
+* Struct: UserSession
+*
+* Description: This struct represents a user session in the database, and is used throughout the program to represent a session.
+ */
 type UserSession struct {
-	SessId         int64
-	ExpiryTimeUnix int64
-	UserId         int
+	SessId         int64 // Unique id of the session
+	ExpiryTimeUnix int64 // The unix time at which the session is no longer valid
+	UserId         int   // Unique id of the user
 }
 
 /*
@@ -277,7 +288,6 @@ func GetUserById(db *sql.DB, id int) (*UserLogin, error) {
 		return nil, err
 	}
 
-	// user.Id = id
 	return &user, nil
 }
 

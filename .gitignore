@@ -6,4 +6,5 @@ tmp/
 *.pem
 main
 server
-config.yml
+config.yaml
+server.log

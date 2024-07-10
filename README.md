@@ -2,6 +2,8 @@
 ---
 This project is a simple bitly clone that shortens URLs and counts how many times those URLS are accessed. 
 
+Live Demo: https://srt.vtallen.com
+
 ## Features
 ---
 * Allows the user to created shorted links of any url
@@ -23,17 +25,11 @@ This server has been tested and verified for use only on Linux. You may run into
 
 1. Make a copy of config_template.yaml and rename it to config.yaml
 2. Generate tls certificates, then modify config.yaml to have the paths of your certificate and key files
+    - You can use standard let's encrypt certificates for this: https://levelup.gitconnected.com/generate-ssl-certificate-with-lets-encrypt-a8e26cf0a378
 3. Go to https://www.hcaptcha.com/
     - Create an account
     - Copy your secret key and place it in config.yaml
     - Create a site key and place it in config.yaml
 4. Generate a strong, random password to use as the cookie secret. Place this in config.yaml
 5. Run make to generate an executable
-6. Run the server ```./server```
-
-## TODO
----
-* Document all functions
-* Replace any print statements with log statements
-* Add logging to the handlers where needed
-* Enable auto tls
+6. Run the server ```sudo ./server```

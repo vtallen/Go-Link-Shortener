@@ -1,0 +1,16 @@
+{{ block "about" .}}
+<!DOCTYPE html>
+{{ template "head" .}}
+{{ template "navbar" .}}
+
+<body>
+  <div id="main-content" class="container mt-4">
+    <h1 class="text-center display-5">About</h1>
+    <p class="text-center">
+      This is a simple link shortener written with golang and htmx as a portfolio project for my resume.
+
+      It is open source, and the code for it can be found in my github page linked in the navigation bar.
+    </p>
+  </div>
+</body>
+{{ end }}

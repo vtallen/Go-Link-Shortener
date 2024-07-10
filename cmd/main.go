@@ -242,5 +242,16 @@ func main() {
 		return HandleUserPage(c, &userPageData, config)
 	}, sessmngt.SessionMiddleware)
 
+	e.GET("/about", func(c echo.Context) error {
+		// The navbar changes based on if a user is logged in or not, this enables the functionality
+		indexData.IsLoggedIn = false
+		err := sessmngt.ValidateSession(c)
+		if err == nil {
+			indexData.IsLoggedIn = true
+		}
+
+		return c.Render(200, "about", indexData)
+	})
+
 	e.Logger.Fatal(e.StartTLS(":"+strconv.Itoa(config.Server.Port), config.Auth.TLSCert, config.Auth.TLSKey)) // Run the server
 }
